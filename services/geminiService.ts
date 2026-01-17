@@ -2,10 +2,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { AnimeData, QuizQuestion, QuizSettings, QuestionType, Language, AIPersona } from '../types';
 import { cleanDescription } from './aniListService';
 
-// Initialize Gemini Client
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
-const MODEL_NAME = 'gemini-2.5-flash';
+const MODEL_NAME = 'gemini-3-flash-preview';
 
 const getPersonaInstruction = (persona: AIPersona, lang: Language): string => {
   const isArabic = lang === Language.ARABIC;
@@ -34,9 +31,19 @@ const getPersonaInstruction = (persona: AIPersona, lang: Language): string => {
 
 export const generateQuizQuestions = async (
   animeList: AnimeData[],
-  settings: QuizSettings
+  settings: QuizSettings,
+  customApiKey?: string
 ): Promise<QuizQuestion[]> => {
   
+  // Use custom key if provided, otherwise fall back to environment variable
+  // Note: process.env.API_KEY is polyfilled by Vite
+  const apiKey = customApiKey || process.env.API_KEY;
+  if (!apiKey) {
+    throw new Error("API Key is missing. Please provide a valid Gemini API Key.");
+  }
+
+  const ai = new GoogleGenAI({ apiKey });
+
   // 1. Prepare Context for Gemini with detailed character/image info
   const animeContext = animeList.map(a => ({
     title: a.title.english || a.title.romaji,

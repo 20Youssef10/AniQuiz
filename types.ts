@@ -1,3 +1,4 @@
+
 export enum Difficulty {
   EASY = 'Easy',
   MEDIUM = 'Medium',
@@ -100,4 +101,23 @@ export interface QuizState {
   answers: Record<number, string>; // Index -> Selected Answer
   timeLeft?: number; // For Time Attack
   themeImage?: string; // Background image URL for dynamic theming
+}
+
+// Multiplayer Types
+export interface Player {
+  id: string;
+  name: string;
+  score: number;
+  isHost: boolean;
+}
+
+export interface Room {
+  id: string;
+  code: string; // Short code for joining
+  hostId: string;
+  status: 'waiting' | 'playing' | 'completed';
+  settings: QuizSettings;
+  players: Player[];
+  questions?: QuizQuestion[];
+  createdAt: number;
 }
