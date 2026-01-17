@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { QuizState, Difficulty, QuizSettings, Language, ContentType, GameMode, AIPersona, Room, Player } from './types';
+import { useState, useEffect } from 'react';
+import { QuizState, Difficulty, Language, ContentType, GameMode, AIPersona, Room } from './types';
 import { fetchMediaData } from './services/aniListService';
 import { generateQuizQuestions } from './services/geminiService';
 import { getChallenge, createRoom, joinRoom, listenToRoom, startRoomGame } from './services/firebase';
@@ -315,7 +315,6 @@ export default function App() {
 
   const renderSettings = (isRoomSetup = false) => (
     <div className="glass-panel p-6 md:p-8 rounded-2xl space-y-8 shadow-2xl ring-1 ring-white/10 animate-fade-in">
-       {/* (Settings UI Code from previous implementation - reused) */}
        {/* Game Mode */}
        <div>
           <label className="block text-sm font-semibold mb-3 text-gray-300 uppercase tracking-wider">{isArabic ? 'نمط اللعب' : 'Game Mode'}</label>
@@ -386,6 +385,53 @@ export default function App() {
             </div>
           </div>
        )}
+       
+       {/* Question Count */}
+       <div>
+          <label className="block text-sm font-semibold mb-3 text-gray-300 uppercase tracking-wider">
+            {isArabic ? 'عدد الأسئلة' : 'Number of Questions'}
+          </label>
+          <div className="flex gap-2">
+            {QUESTION_COUNTS.map(count => (
+              <button
+                key={count}
+                onClick={() => {
+                  playSound('click');
+                  setState(prev => ({ ...prev, settings: { ...prev.settings, questionCount: count } }));
+                }}
+                className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  state.settings.questionCount === count
+                    ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20' 
+                    : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                }`}
+              >
+                {count}
+              </button>
+            ))}
+          </div>
+       </div>
+
+       {/* AI Persona Selection (Optional but good for completeness) */}
+       <div>
+         <label className="block text-sm font-semibold mb-3 text-gray-300 uppercase tracking-wider">
+           {isArabic ? 'شخصية الذكاء الاصطناعي' : 'AI Host Persona'}
+         </label>
+         <div className="grid grid-cols-2 gap-2">
+            {Object.values(AIPersona).map(p => (
+              <button
+                key={p}
+                onClick={() => setState(prev => ({ ...prev, settings: { ...prev.settings, aiPersona: p } }))}
+                className={`py-1.5 px-2 rounded-lg text-xs font-medium transition-colors ${
+                  state.settings.aiPersona === p
+                    ? 'bg-pink-600 text-white shadow-md shadow-pink-600/20' 
+                    : 'bg-white/5 text-gray-400 hover:bg-white/10'
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+         </div>
+       </div>
        
        {/* Host Extra Inputs */}
        {isRoomSetup && (
