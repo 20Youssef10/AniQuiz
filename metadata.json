@@ -1,0 +1,5 @@
+{
+  "name": "AniQuiz AI",
+  "description": "A modern, AI-powered Anime Quiz application generating dynamic questions using Gemini and AniList data.",
+  "requestFramePermissions": []
+}
