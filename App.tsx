@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { QuizState, Difficulty, QuizSettings, Language, ContentType, GameMode, AIPersona, Room, Player } from './types';
+import { useState, useEffect } from 'react';
+import { QuizState, Difficulty, Language, ContentType, GameMode, AIPersona, Room } from './types';
 import { fetchMediaData } from './services/aniListService';
 import { generateQuizQuestions } from './services/geminiService';
 import { getChallenge, createRoom, joinRoom, listenToRoom, startRoomGame } from './services/firebase';
@@ -36,7 +36,6 @@ const INITIAL_STATE: QuizState = {
 };
 
 const TOPICS = ['All', 'Action', 'Romance', 'Fantasy', 'Sci-Fi', 'Slice of Life'];
-const QUESTION_COUNTS = [5, 10, 15, 20];
 
 export default function App() {
   const [state, setState] = useState<QuizState>(INITIAL_STATE);
