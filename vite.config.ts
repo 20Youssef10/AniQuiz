@@ -6,11 +6,15 @@ export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
   // Set the third parameter to '' to load all env regardless of the `VITE_` prefix.
   const env = loadEnv(mode, (process as any).cwd(), '');
+  
+  // Use provided default key if env.API_KEY is not set
+  const apiKey = env.API_KEY || "AIzaSyBLs6rZ8nzub0QbK3pfdkwcKCFvZ7w49cs";
+
   return {
     plugins: [react()],
     define: {
       // Polyfill process.env.API_KEY so it works in the browser build
-      'process.env.API_KEY': JSON.stringify(env.API_KEY),
+      'process.env.API_KEY': JSON.stringify(apiKey),
     },
   }
 })
