@@ -519,271 +519,263 @@ export default function App() {
     </div>
   );
 
-  // --- Main Render Switch ---
+  // Main Render
+  if (state.status === 'loading') {
+    return (
+      <div className={`min-h-screen bg-anime-dark text-white ${fontClass} ${direction === 'rtl' ? 'rtl' : 'ltr'} flex items-center justify-center`}>
+        {/* Use Skeleton if we were expecting a game or in setup, else Spinner */}
+        {view === 'game' || view === 'single_setup' ? (
+          <div className="w-full max-w-2xl px-4">
+            <QuestionSkeleton />
+            <p className="text-center mt-4 text-gray-400 animate-pulse">Summoning Questions...</p>
+          </div>
+        ) : (
+          <LoadingSpinner />
+        )}
+      </div>
+    );
+  }
 
-  return (
-    <div className={`min-h-screen relative bg-anime-dark text-white overflow-hidden ${fontClass}`} dir={direction}>
-       {/* Background */}
-       <div className="absolute inset-0 z-0 bg-cover bg-center transition-all duration-1000 ease-in-out opacity-20" style={{ backgroundImage: state.themeImage ? `url(${state.themeImage})` : 'none', filter: 'blur(20px) brightness(0.5)' }} />
-       <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/40 via-anime-dark/80 to-anime-dark"></div>
+  if (view === 'arcade') {
+    return (
+      <div className={`min-h-screen bg-anime-dark text-white ${fontClass} ${direction === 'rtl' ? 'rtl' : 'ltr'} p-4`}>
+         <ArcadeHub 
+           onSelectPreset={handleArcadePreset} 
+           onSelectMiniGame={(game) => {
+             setView(game);
+             playSound('click');
+           }}
+           onBack={() => setView('home')} 
+         />
+      </div>
+    );
+  }
 
-       {/* Modals */}
-       {showAuthModal && (
-          <AuthModal 
-             onClose={() => setShowAuthModal(false)} 
-             onLoginSuccess={(u) => { 
-                setUser(u); 
-                if (u.displayName) setPlayerName(u.displayName); 
-             }} 
-          />
-       )}
-       {showProfile && userProfile && (
-          <UserProfileView 
-             profile={userProfile} 
-             onClose={() => setShowProfile(false)} 
-             onLogout={async () => {
-                await logout();
-                setShowProfile(false);
-             }}
-          />
-       )}
-       {showGacha && userProfile && (
-          <GachaSystem user={userProfile} onClose={() => setShowGacha(false)} />
-       )}
+  if (['memory', 'whack', 'silhouette', 'chat', 'typing'].includes(view)) {
+    return (
+      <div className={`min-h-screen bg-anime-dark text-white ${fontClass} ${direction === 'rtl' ? 'rtl' : 'ltr'} p-4 flex items-center justify-center`}>
+         {view === 'memory' && <MemoryGame onExit={() => setView('arcade')} />}
+         {view === 'whack' && <WhackGame onExit={() => setView('arcade')} />}
+         {view === 'silhouette' && <SilhouetteGame onExit={() => setView('arcade')} />}
+         {view === 'chat' && <ChatGame onExit={() => setView('arcade')} />}
+         {view === 'typing' && <TypingGame onExit={() => setView('arcade')} />}
+      </div>
+    );
+  }
 
-       <div className="relative z-10">
-          {/* Header */}
-          <header className="p-6 flex justify-between items-center border-b border-white/5 bg-anime-dark/50 backdrop-blur-md sticky top-0 z-50">
-             <h1 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-anime-primary to-anime-accent cursor-pointer hover:opacity-80 transition-opacity" onClick={() => restartGame()}>AniQuiz AI</h1>
-             
-             <div className="flex items-center gap-4">
-                {view === 'game' && (
-                  <div className={`text-sm font-bold bg-white/10 px-3 py-1 rounded-full transition-transform duration-200 ${scoreBump ? 'scale-125 bg-green-500/20 text-green-300' : ''}`}>
-                    Score: {state.score}
-                  </div>
-                )}
-                
-                {/* Gacha Button */}
-                {user && userProfile && (
-                  <button onClick={() => setShowGacha(true)} className="text-2xl hover:scale-110 transition-transform" title="Daily Gacha">
-                     🎁
-                  </button>
-                )}
+  if (view === 'story') {
+    return (
+      <div className={`min-h-screen bg-anime-dark text-white ${fontClass} ${direction === 'rtl' ? 'rtl' : 'ltr'}`}>
+         <StoryMode onClose={() => setView('arcade')} />
+      </div>
+    );
+  }
 
-                {/* User Avatar / Login Btn */}
-                {user && !user.isAnonymous && userProfile ? (
-                   <div onClick={() => setShowProfile(true)} className="flex items-center gap-2 cursor-pointer hover:bg-white/5 p-1 rounded-lg transition-colors">
-                      <div className="text-right hidden md:block">
-                         <div className="text-xs font-bold text-white">{userProfile.displayName}</div>
-                         <div className="text-[10px] text-anime-primary">LVL {userProfile.level}</div>
-                      </div>
-                      <div className="w-8 h-8 rounded-full overflow-hidden border border-anime-primary">
-                         {userProfile.photoURL ? (
-                           <img src={userProfile.photoURL} alt="User" className="w-full h-full object-cover" />
-                         ) : (
-                           <div className="w-full h-full bg-anime-secondary flex items-center justify-center text-xs font-bold">
-                             {userProfile.displayName.charAt(0)}
-                           </div>
-                         )}
-                      </div>
-                   </div>
-                ) : (
-                   <Button variant="ghost" className="!px-4 !py-2 text-xs md:text-sm" onClick={() => setShowAuthModal(true)}>
-                      Login
-                   </Button>
-                )}
-             </div>
-          </header>
+  if (view === 'lobby' && room) {
+     const isHost = room.hostId === playerId;
+     return (
+        <div className={`min-h-screen bg-anime-dark text-white ${fontClass} ${direction === 'rtl' ? 'rtl' : 'ltr'} flex items-center justify-center p-4`}>
+           <div className="glass-panel p-8 rounded-3xl max-w-lg w-full text-center space-y-6">
+              <h2 className="text-3xl font-bold mb-2">Lobby</h2>
+              <div className="bg-white/10 p-4 rounded-xl mb-4">
+                 <p className="text-xs uppercase text-gray-400 tracking-widest">Room Code</p>
+                 <p className="text-4xl font-mono font-black text-anime-primary tracking-widest">{room.code}</p>
+              </div>
 
-          <main className="container mx-auto px-4 py-8 md:py-12">
-             
-             {/* Loading State - Showing Spinner during heavy fetching, Skeleton during transition if needed */}
-             {(state.status === 'loading') && <LoadingSpinner message={isArabic ? "جاري التحميل..." : "Summoning Knowledge..."} />}
-             
-             {/* Error State */}
-             {state.status === 'error' && (
-                <div className="text-center p-8 glass-panel rounded-xl max-w-md mx-auto animate-shake">
-                   <div className="text-red-400 text-5xl mb-4">⚠</div>
-                   <p className="mb-6">{state.error}</p>
-                   <Button onClick={() => setState(prev => ({ ...prev, status: 'idle', error: undefined }))}>Dismiss</Button>
+              <div className="space-y-2 text-left">
+                 <p className="text-sm font-bold text-gray-400">Players ({room.players.length})</p>
+                 {room.players.map(p => (
+                    <div key={p.id} className="flex items-center gap-2 bg-black/20 p-3 rounded-lg">
+                       <div className="w-8 h-8 rounded-full bg-anime-secondary flex items-center justify-center text-xs font-bold">
+                          {p.name.charAt(0)}
+                       </div>
+                       <span>{p.name} {p.isHost && '👑'}</span>
+                    </div>
+                 ))}
+              </div>
+
+              {isHost ? (
+                <div className="pt-4 border-t border-white/10">
+                   <Button fullWidth onClick={handleStartRoomGame} className="animate-pulse">Start Game</Button>
                 </div>
-             )}
+              ) : (
+                <p className="text-sm text-gray-400 animate-pulse">Waiting for host to start...</p>
+              )}
+           </div>
+        </div>
+     );
+  }
 
-             {state.status !== 'loading' && state.status !== 'error' && (
-               <>
-                 {/* 1. Home View */}
-                 {view === 'home' && (
-                    <div className="max-w-4xl mx-auto flex flex-col items-center animate-fade-in-up">
-                       <LevelProgress language={state.settings.language} />
-                       <h2 className="text-4xl md:text-6xl font-black mb-4 text-center tracking-tight">
-                          <span className="text-transparent bg-clip-text bg-gradient-to-r from-anime-primary to-anime-secondary">Master</span> the Anime World
-                       </h2>
-                       <p className="text-gray-400 text-lg mb-12 text-center max-w-xl">
-                          Challenge yourself or battle friends in real-time with AI-generated quizzes.
-                       </p>
+  if (state.status === 'completed') {
+    return (
+      <div className={`min-h-screen bg-anime-dark text-white ${fontClass} ${direction === 'rtl' ? 'rtl' : 'ltr'} flex items-center justify-center`}>
+        <ScoreBoard state={state} onRestart={restartGame} onSaveStats={handleSaveStats} />
+      </div>
+    );
+  }
 
-                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
-                          {/* Single Player */}
-                          <button onClick={() => setView('single_setup')} className="group glass-panel p-6 rounded-3xl hover:bg-white/5 transition-all duration-300 border border-white/10 hover:border-anime-primary/50 text-left relative overflow-hidden transform hover:-translate-y-1">
-                             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-5xl">👤</div>
-                             <h3 className="text-xl font-bold mb-2 text-white group-hover:text-anime-primary transition-colors">Solo Play</h3>
-                             <p className="text-gray-400 text-xs">Challenge the AI alone.</p>
-                          </button>
+  if (state.status === 'playing' || view === 'game') {
+    const currentQuestion = state.questions[state.currentIndex];
+    
+    // Safety check if questions aren't loaded yet but status is playing
+    if (!currentQuestion) return <LoadingSpinner />;
 
-                          {/* Arcade Mode */}
-                          <button onClick={() => setView('arcade')} className="group glass-panel p-6 rounded-3xl hover:bg-white/5 transition-all duration-300 border border-white/10 hover:border-yellow-500/50 text-left relative overflow-hidden transform hover:-translate-y-1">
-                             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-5xl">🕹️</div>
-                             <h3 className="text-xl font-bold mb-2 text-white group-hover:text-yellow-400 transition-colors">Arcade Zone</h3>
-                             <p className="text-gray-400 text-xs">Mini-games & Gacha.</p>
-                          </button>
+    return (
+      <div 
+        className={`min-h-screen bg-anime-dark text-white ${fontClass} ${direction === 'rtl' ? 'rtl' : 'ltr'} flex flex-col items-center p-4 transition-all duration-1000`}
+        style={{
+           backgroundImage: state.themeImage ? `linear-gradient(rgba(15, 23, 42, 0.9), rgba(15, 23, 42, 0.95)), url(${state.themeImage})` : 'none',
+           backgroundSize: 'cover',
+           backgroundPosition: 'center'
+        }}
+      >
+        <div className="w-full max-w-4xl flex justify-between items-center py-4 mb-4">
+           <Button variant="ghost" onClick={() => {
+              if (confirm("Exit game? Progress will be lost.")) restartGame();
+           }}>
+             ✕ Exit
+           </Button>
+           <div className={`text-2xl font-bold transition-transform ${scoreBump ? 'scale-125 text-green-400' : ''}`}>
+             Score: {state.score}
+           </div>
+        </div>
 
-                          {/* Create Room */}
-                          <button onClick={() => setView('room_setup')} className="group glass-panel p-6 rounded-3xl hover:bg-white/5 transition-all duration-300 border border-white/10 hover:border-green-500/50 text-left relative overflow-hidden transform hover:-translate-y-1">
-                             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-5xl">⚔️</div>
-                             <h3 className="text-xl font-bold mb-2 text-white group-hover:text-green-400 transition-colors">Create Room</h3>
-                             <p className="text-gray-400 text-xs">Host a lobby.</p>
-                          </button>
+        {state.settings.gameMode === GameMode.TIME_ATTACK && (
+           <Timer timeLeft={state.timeLeft || 0} maxTime={QUESTION_TIMER_SECONDS} />
+        )}
 
-                          {/* Join Room */}
-                          <button onClick={() => setView('join_room')} className="group glass-panel p-6 rounded-3xl hover:bg-white/5 transition-all duration-300 border border-white/10 hover:border-anime-accent/50 text-left relative overflow-hidden transform hover:-translate-y-1">
-                             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-5xl">🚪</div>
-                             <h3 className="text-xl font-bold mb-2 text-white group-hover:text-anime-accent transition-colors">Join Room</h3>
-                             <p className="text-gray-400 text-xs">Enter a party code.</p>
-                          </button>
-                       </div>
-                    </div>
-                 )}
+        {/* Progress Bar */}
+        <div className="w-full max-w-2xl bg-white/10 h-1 rounded-full mb-8">
+           <div 
+             className="h-full bg-anime-primary transition-all duration-500" 
+             style={{ width: `${((state.currentIndex + 1) / state.questions.length) * 100}%` }}
+           ></div>
+        </div>
 
-                 {/* 2. Setup Views */}
-                 {view === 'single_setup' && <div className="max-w-2xl mx-auto">{renderSettings(false)}</div>}
-                 {view === 'room_setup' && <div className="max-w-2xl mx-auto">{renderSettings(true)}</div>}
-                 
-                 {/* 3. Arcade Hub */}
-                 {view === 'arcade' && (
-                    <ArcadeHub 
-                      onBack={() => setView('home')}
-                      onSelectPreset={handleArcadePreset}
-                      onSelectMiniGame={(game) => setView(game)}
-                    />
-                 )}
-                 
-                 {/* 4. Mini Games & Story */}
-                 {view === 'story' && <StoryMode onClose={() => setView('arcade')} />}
-                 {view === 'memory' && <MemoryGame onExit={() => setView('arcade')} />}
-                 {view === 'whack' && <WhackGame onExit={() => setView('arcade')} />}
-                 {view === 'silhouette' && <SilhouetteGame onExit={() => setView('arcade')} />}
-                 {view === 'chat' && <ChatGame onExit={() => setView('arcade')} />}
-                 {view === 'typing' && <TypingGame onExit={() => setView('arcade')} />}
+        <QuestionCard
+          question={currentQuestion}
+          selectedAnswer={state.answers[state.currentIndex]}
+          onAnswer={handleAnswer}
+          isRevealed={isAnswerRevealed}
+        />
 
-                 {/* 5. Join Room View */}
-                 {view === 'join_room' && (
-                    <div className="max-w-md mx-auto glass-panel p-8 rounded-3xl animate-fade-in-up">
-                       <h2 className="text-2xl font-bold mb-6 text-center">Join Party</h2>
-                       <div className="space-y-4">
-                          <div>
-                             <label className="block text-sm font-semibold mb-2 text-gray-400">Your Name</label>
-                             <input type="text" value={playerName} onChange={e => setPlayerName(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-anime-accent" />
-                          </div>
-                          <div>
-                             <label className="block text-sm font-semibold mb-2 text-gray-400">Room Code</label>
-                             <input type="text" value={roomCodeInput} onChange={e => setRoomCodeInput(e.target.value.toUpperCase())} placeholder="ABCD12" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 tracking-widest font-mono text-center text-xl uppercase outline-none focus:border-anime-accent" />
-                          </div>
-                          <Button fullWidth onClick={handleJoinRoom} className="!bg-anime-accent">Join Room</Button>
-                          <Button fullWidth variant="ghost" onClick={() => setView('home')}>Back</Button>
-                       </div>
-                    </div>
-                 )}
+        {isAnswerRevealed && (
+          <div className="fixed bottom-8 animate-fade-in-up z-20">
+            <Button onClick={nextQuestion} className="px-12 py-4 text-lg shadow-xl shadow-anime-primary/20">
+              {state.currentIndex < state.questions.length - 1 ? (isArabic ? 'السؤال التالي' : 'Next Question') : (isArabic ? 'إنهاء' : 'Finish')}
+            </Button>
+          </div>
+        )}
+      </div>
+    );
+  }
 
-                 {/* 6. Lobby View */}
-                 {view === 'lobby' && room && (
-                    <div className="max-w-2xl mx-auto glass-panel p-8 rounded-3xl animate-fade-in-up text-center">
-                       <div className="mb-6">
-                          <p className="text-gray-400 uppercase tracking-widest text-xs mb-2">Room Code</p>
-                          <div className="text-5xl font-black font-mono tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-anime-primary to-anime-accent">{room.code || '...'}</div>
-                       </div>
-                       
-                       {!room.settings || !room.players ? (
-                          <div className="py-8">
-                              <LoadingSpinner message={isArabic ? "جاري الانضمام..." : "Joining Room..."} />
-                          </div>
-                       ) : (
-                          <>
-                            <div className="mb-8">
-                                <h3 className="text-xl font-bold mb-4 flex items-center justify-center gap-2">
-                                  Players <span className="bg-white/10 text-xs px-2 py-1 rounded-full">{room.players.length}</span>
-                                </h3>
-                                <div className="grid grid-cols-2 gap-2">
-                                  {room.players.map(p => (
-                                      <div key={p.id} className={`p-3 rounded-xl border ${p.isHost ? 'border-yellow-500/50 bg-yellow-500/10' : 'border-white/10 bg-white/5'} flex items-center justify-between animate-fade-in`}>
-                                        <span className="font-bold">{p.name}</span>
-                                        {p.isHost && <span className="text-xs text-yellow-500">HOST</span>}
-                                      </div>
-                                  ))}
-                                </div>
-                            </div>
-
-                            <div className="bg-black/30 p-4 rounded-xl mb-6 text-left">
-                                <p className="text-xs text-gray-500 mb-2 uppercase">Settings</p>
-                                <div className="flex flex-wrap gap-2">
-                                  <span className="text-xs bg-white/10 px-2 py-1 rounded">{room.settings.difficulty}</span>
-                                  <span className="text-xs bg-white/10 px-2 py-1 rounded">{room.settings.gameMode}</span>
-                                  <span className="text-xs bg-white/10 px-2 py-1 rounded">{room.settings.questionCount} Qs</span>
-                                </div>
-                            </div>
-
-                            {room.hostId === playerId ? (
-                                <div className="space-y-3">
-                                  <Button fullWidth onClick={handleStartRoomGame} className="!bg-green-600 text-lg py-4">Start Game</Button>
-                                  <p className="text-xs text-gray-500">This will generate questions and start for everyone.</p>
-                                </div>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center p-4">
-                                  <LoadingSpinner message="Waiting for host to start..." />
-                                </div>
-                            )}
-                          </>
-                       )}
-                    </div>
-                 )}
-
-                 {/* 7. Game View */}
-                 {view === 'game' && state.questions && state.questions.length > 0 && (
-                   <div className="space-y-6">
-                      {state.settings.gameMode === GameMode.TIME_ATTACK && <Timer timeLeft={state.timeLeft || 0} maxTime={QUESTION_TIMER_SECONDS} />}
-                      
-                      {/* 
-                         We use a Key here to force React to remount the QuestionCard 
-                         when currentIndex changes, triggering entrance animations 
-                      */}
-                      <QuestionCard 
-                        key={state.currentIndex}
-                        question={state.questions[state.currentIndex]} 
-                        onAnswer={handleAnswer} 
-                        selectedAnswer={state.answers[state.currentIndex]} 
-                        isRevealed={isAnswerRevealed} 
-                      />
-                      
-                      {isAnswerRevealed && state.status !== 'completed' && (
-                        <div className="flex justify-center animate-fade-in-up">
-                          <Button onClick={nextQuestion} variant={(state.settings.gameMode === GameMode.SURVIVAL && state.answers[state.currentIndex] !== state.questions[state.currentIndex].correctAnswer) ? 'secondary' : 'primary'}>
-                             {state.questions && state.currentIndex === state.questions.length - 1 ? (isArabic ? 'إنهاء' : 'Finish') : (isArabic ? 'التالي' : 'Next Question')}
-                          </Button>
+  // Fallback: Home View
+  return (
+    <div className={`min-h-screen bg-anime-dark text-white ${fontClass} ${direction === 'rtl' ? 'rtl' : 'ltr'} overflow-x-hidden`}>
+      
+      {/* Top Nav */}
+      <nav className="p-6 flex justify-between items-center max-w-7xl mx-auto">
+         <h1 className="text-2xl font-black tracking-tighter italic bg-clip-text text-transparent bg-gradient-to-r from-anime-primary to-anime-accent cursor-pointer" onClick={() => setView('home')}>
+            ANIQUIZ<span className="text-white">AI</span>
+         </h1>
+         <div className="flex gap-4">
+            {user ? (
+               <div className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setShowProfile(true)}>
+                  <div className="text-right hidden md:block">
+                     <div className="text-sm font-bold">{user.displayName}</div>
+                     <div className="text-xs text-anime-secondary">LVL {userProfile?.level || 1}</div>
+                  </div>
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-anime-primary to-anime-secondary p-0.5">
+                     {user.photoURL ? (
+                        <img src={user.photoURL} className="w-full h-full rounded-full object-cover" alt="Profile" />
+                     ) : (
+                        <div className="w-full h-full bg-black rounded-full flex items-center justify-center font-bold">
+                           {user.displayName?.charAt(0) || 'U'}
                         </div>
-                      )}
-                      
-                      {state.status === 'completed' && (
-                         <ScoreBoard 
-                            state={state} 
-                            onRestart={restartGame} 
-                            onSaveStats={handleSaveStats}
-                         />
-                      )}
-                   </div>
-                 )}
-               </>
-             )}
-          </main>
-       </div>
+                     )}
+                  </div>
+               </div>
+            ) : (
+               <Button variant="outline" onClick={() => setShowAuthModal(true)} className="!py-2">Login</Button>
+            )}
+         </div>
+      </nav>
+
+      {/* Hero Section */}
+      <div className="flex flex-col items-center justify-center p-4 pt-10 pb-20 text-center relative">
+         <div className="absolute top-0 left-1/4 w-64 h-64 bg-anime-primary/20 rounded-full blur-[100px] pointer-events-none"></div>
+         <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-anime-accent/20 rounded-full blur-[100px] pointer-events-none"></div>
+
+         <div className="mb-4 inline-block px-4 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-bold tracking-widest text-anime-secondary animate-fade-in">
+            POWERED BY GEMINI AI
+         </div>
+         
+         <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight animate-fade-in-up">
+            TEST YOUR <br/>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-anime-primary via-anime-secondary to-anime-accent animate-shimmer bg-[length:200%_auto]">
+               ANIME KNOWLEDGE
+            </span>
+         </h1>
+         
+         <p className="max-w-xl text-gray-400 text-lg mb-10 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+            Challenge yourself with infinite AI-generated quizzes from your favorite series. 
+            Rank up, unlock achievements, and prove you are the ultimate Otaku.
+         </p>
+
+         <div className="flex flex-col md:flex-row gap-4 w-full max-w-md animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+            <Button fullWidth className="text-lg py-4" onClick={() => setView('single_setup')}>
+               Solo Challenge
+            </Button>
+            <Button fullWidth variant="secondary" className="text-lg py-4" onClick={() => setView('arcade')}>
+               Arcade Zone 🕹️
+            </Button>
+         </div>
+         
+         <div className="mt-4 flex gap-4 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+            <Button variant="ghost" className="text-sm" onClick={() => setView('room_setup')}>Create Room</Button>
+            <Button variant="ghost" className="text-sm" onClick={() => setView('join_room')}>Join Room</Button>
+         </div>
+         
+         <div className="mt-8 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
+             <Button variant="outline" className="text-sm border-yellow-500 text-yellow-500 hover:bg-yellow-500/10" onClick={() => setShowGacha(true)}>
+                🎁 Daily Gacha Summon
+             </Button>
+         </div>
+      </div>
+
+      {/* Render View Content for Setups */}
+      {(view === 'single_setup' || view === 'room_setup') && (
+         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+             <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+                {renderSettings(view === 'room_setup')}
+             </div>
+         </div>
+      )}
+
+      {/* Join Room Modal */}
+      {view === 'join_room' && (
+         <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+            <div className="glass-panel p-8 rounded-2xl max-w-sm w-full space-y-4">
+               <h2 className="text-2xl font-bold mb-4">Join Party</h2>
+               <input type="text" placeholder="Your Name" value={playerName} onChange={e => setPlayerName(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3" />
+               <input type="text" placeholder="Room Code (e.g. A1B2C3)" value={roomCodeInput} onChange={e => setRoomCodeInput(e.target.value.toUpperCase())} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 font-mono tracking-widest uppercase" maxLength={6} />
+               {state.error && <p className="text-red-400 text-sm">{state.error}</p>}
+               <Button fullWidth onClick={handleJoinRoom}>Enter Room</Button>
+               <Button fullWidth variant="ghost" onClick={() => { setView('home'); setState(p => ({...p, error: undefined})); }}>Cancel</Button>
+            </div>
+         </div>
+      )}
+
+      {/* Stats / Level Footer */}
+      <div className="max-w-4xl mx-auto px-6 pb-12">
+         <LevelProgress language={state.settings.language} />
+      </div>
+
+      {/* Modals */}
+      {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onLoginSuccess={(u) => { setUser(u); setShowAuthModal(false); }} />}
+      {showProfile && userProfile && <UserProfileView profile={userProfile} onClose={() => setShowProfile(false)} onLogout={() => { logout(); setShowProfile(false); setUser(null); }} />}
+      {showGacha && userProfile && <GachaSystem user={userProfile} onClose={() => setShowGacha(false)} />}
     </div>
   );
 }

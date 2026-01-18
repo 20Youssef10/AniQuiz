@@ -42,6 +42,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, selectedAnswer, o
       if (option !== question.correctAnswer) {
         setShakingOption(option); // Trigger shake on wrong click locally for immediate feedback
       }
+      playSound('click'); // Provide audio feedback
       onAnswer(option);
     }
   };

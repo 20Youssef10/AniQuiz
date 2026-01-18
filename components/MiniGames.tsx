@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { fetchTopCharacters } from '../services/aniListService';
 import { fetchMalCharacterImage } from '../services/jikanService'; // Import fallback service
 import { createChatSession } from '../services/geminiService';
-import { GenerateContentResponse, Chat } from '@google/genai';
+import { Chat, GenerateContentResponse } from '@google/genai';
 import Button from './Button';
 import { playSound } from '../utils/sound';
 
@@ -559,7 +559,7 @@ export const ChatGame: React.FC<{ onExit: () => void }> = ({ onExit }) => {
     setIsTyping(true);
 
     try {
-      const result = await chatSessionRef.current.sendMessage({ message: userMsg });
+      const result: GenerateContentResponse = await chatSessionRef.current.sendMessage({ message: userMsg });
       setMessages(prev => [...prev, { role: 'model', text: result.text || "..." }]);
     } catch (e) {
       setMessages(prev => [...prev, { role: 'model', text: "(Connection Error)" }]);
