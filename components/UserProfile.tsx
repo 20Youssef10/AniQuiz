@@ -1,5 +1,5 @@
 import React from 'react';
-import { UserProfile, Achievement } from '../types';
+import { UserProfile } from '../types';
 import { ACHIEVEMENTS, calculateStatsFromXp } from '../services/levelService';
 import Button from './Button';
 

@@ -9,7 +9,6 @@ import {
   listenToRoom, 
   startRoomGame, 
   auth, 
-  getUserProfile, 
   subscribeToUserProfile, 
   logout, 
   saveGameResultToProfile 
