@@ -4,7 +4,7 @@ import { QuizSettings, Difficulty, QuestionType, GameMode, ContentType, Language
 
 interface ArcadeHubProps {
   onSelectPreset: (settings: QuizSettings) => void;
-  onSelectMiniGame: (game: 'memory' | 'whack' | 'story') => void;
+  onSelectMiniGame: (game: 'memory' | 'whack' | 'story' | 'silhouette' | 'chat' | 'typing') => void;
   onBack: () => void;
 }
 
@@ -78,22 +78,36 @@ const ArcadeHub: React.FC<ArcadeHubProps> = ({ onSelectPreset, onSelectMiniGame,
         <div className="space-y-4">
            <h3 className="text-xl font-bold text-gray-300 border-b border-white/10 pb-2">Mini Games</h3>
            
-           <div onClick={() => onSelectMiniGame('story')} className="group cursor-pointer glass-panel p-6 rounded-2xl hover:bg-white/10 transition-all border-l-4 border-purple-500">
-              <div className="text-4xl mb-2">📖</div>
-              <h4 className="text-xl font-bold group-hover:text-purple-400 transition-colors">Story Mode (AI)</h4>
-              <p className="text-sm text-gray-400">Choose your own adventure in an endless AI-generated RPG.</p>
-           </div>
+           <div className="grid grid-cols-2 gap-4">
+              <div onClick={() => onSelectMiniGame('silhouette')} className="group cursor-pointer glass-panel p-4 rounded-2xl hover:bg-white/10 transition-all border-b-4 border-gray-100 flex flex-col items-center text-center">
+                  <div className="text-3xl mb-2">⚫</div>
+                  <h4 className="font-bold text-sm group-hover:text-gray-300">Silhouette Challenge</h4>
+              </div>
 
-           <div onClick={() => onSelectMiniGame('memory')} className="group cursor-pointer glass-panel p-6 rounded-2xl hover:bg-white/10 transition-all border-l-4 border-blue-500">
-              <div className="text-4xl mb-2">🃏</div>
-              <h4 className="text-xl font-bold group-hover:text-blue-400 transition-colors">Character Match</h4>
-              <p className="text-sm text-gray-400">Flip cards and match your favorite characters.</p>
-           </div>
+              <div onClick={() => onSelectMiniGame('story')} className="group cursor-pointer glass-panel p-4 rounded-2xl hover:bg-white/10 transition-all border-b-4 border-purple-500 flex flex-col items-center text-center">
+                  <div className="text-3xl mb-2">📖</div>
+                  <h4 className="font-bold text-sm group-hover:text-purple-400">Story Mode</h4>
+              </div>
 
-           <div onClick={() => onSelectMiniGame('whack')} className="group cursor-pointer glass-panel p-6 rounded-2xl hover:bg-white/10 transition-all border-l-4 border-green-500">
-              <div className="text-4xl mb-2">🔨</div>
-              <h4 className="text-xl font-bold group-hover:text-green-400 transition-colors">Whack-a-Slime</h4>
-              <p className="text-sm text-gray-400">Test your reflexes against the slime army.</p>
+              <div onClick={() => onSelectMiniGame('chat')} className="group cursor-pointer glass-panel p-4 rounded-2xl hover:bg-white/10 transition-all border-b-4 border-pink-500 flex flex-col items-center text-center">
+                  <div className="text-3xl mb-2">💬</div>
+                  <h4 className="font-bold text-sm group-hover:text-pink-400">Chat Simulator</h4>
+              </div>
+
+              <div onClick={() => onSelectMiniGame('typing')} className="group cursor-pointer glass-panel p-4 rounded-2xl hover:bg-white/10 transition-all border-b-4 border-red-500 flex flex-col items-center text-center">
+                  <div className="text-3xl mb-2">⌨️</div>
+                  <h4 className="font-bold text-sm group-hover:text-red-400">Typing Defender</h4>
+              </div>
+
+              <div onClick={() => onSelectMiniGame('memory')} className="group cursor-pointer glass-panel p-4 rounded-2xl hover:bg-white/10 transition-all border-b-4 border-blue-500 flex flex-col items-center text-center">
+                  <div className="text-3xl mb-2">🃏</div>
+                  <h4 className="font-bold text-sm group-hover:text-blue-400">Memory Match</h4>
+              </div>
+
+              <div onClick={() => onSelectMiniGame('whack')} className="group cursor-pointer glass-panel p-4 rounded-2xl hover:bg-white/10 transition-all border-b-4 border-green-500 flex flex-col items-center text-center">
+                  <div className="text-3xl mb-2">🔨</div>
+                  <h4 className="font-bold text-sm group-hover:text-green-400">Whack-a-Slime</h4>
+              </div>
            </div>
         </div>
 

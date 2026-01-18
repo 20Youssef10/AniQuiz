@@ -17,6 +17,7 @@ import { checkNewAchievements } from './services/levelService';
 import { onAuthStateChanged } from 'firebase/auth';
 
 import QuestionCard from './components/QuestionCard';
+import QuestionSkeleton from './components/QuestionSkeleton';
 import Button from './components/Button';
 import LoadingSpinner from './components/LoadingSpinner';
 import ScoreBoard from './components/ScoreBoard';
@@ -27,7 +28,7 @@ import UserProfileView from './components/UserProfile';
 import ArcadeHub from './components/ArcadeHub';
 import GachaSystem from './components/GachaSystem';
 import StoryMode from './components/StoryMode';
-import { MemoryGame, WhackGame } from './components/MiniGames';
+import { MemoryGame, WhackGame, SilhouetteGame, ChatGame, TypingGame } from './components/MiniGames';
 import { playSound } from './utils/sound';
 
 // Constants
@@ -61,8 +62,11 @@ export default function App() {
   const [isAnswerRevealed, setIsAnswerRevealed] = useState(false);
   const [searchInput, setSearchInput] = useState('');
   
+  // Visual state for Score Animation
+  const [scoreBump, setScoreBump] = useState(false);
+
   // View State Management
-  const [view, setView] = useState<'home' | 'single_setup' | 'room_setup' | 'join_room' | 'lobby' | 'game' | 'arcade' | 'story' | 'memory' | 'whack'>('home');
+  const [view, setView] = useState<'home' | 'single_setup' | 'room_setup' | 'join_room' | 'lobby' | 'game' | 'arcade' | 'story' | 'memory' | 'whack' | 'silhouette' | 'chat' | 'typing'>('home');
   
   // Room State
   const [room, setRoom] = useState<Room | null>(null);
@@ -103,6 +107,15 @@ export default function App() {
 
     return () => unsubscribeAuth();
   }, []);
+
+  // --- Trigger Score Animation ---
+  useEffect(() => {
+    if (state.score > 0) {
+      setScoreBump(true);
+      const t = setTimeout(() => setScoreBump(false), 300);
+      return () => clearTimeout(t);
+    }
+  }, [state.score]);
 
   // --- Room Listener ---
   useEffect(() => {
@@ -380,7 +393,7 @@ export default function App() {
   // --- Render Components ---
 
   const renderSettings = (isRoomSetup = false) => (
-    <div className="glass-panel p-6 md:p-8 rounded-2xl space-y-8 shadow-2xl ring-1 ring-white/10 animate-fade-in">
+    <div className="glass-panel p-6 md:p-8 rounded-2xl space-y-8 shadow-2xl ring-1 ring-white/10 animate-fade-in-up">
        {/* Game Mode */}
        <div>
           <label className="block text-sm font-semibold mb-3 text-gray-300 uppercase tracking-wider">{isArabic ? 'نمط اللعب' : 'Game Mode'}</label>
@@ -449,7 +462,7 @@ export default function App() {
        {state.settings.contentType === ContentType.SPECIFIC ? (
           <div>
             <label className="block text-sm font-semibold mb-3 text-gray-300 uppercase tracking-wider">{isArabic ? 'اسم الأنمي' : 'Name'}</label>
-            <input type="text" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} placeholder="e.g. One Piece" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white" />
+            <input type="text" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} placeholder="e.g. One Piece" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white transition-all focus:border-anime-primary outline-none" />
           </div>
        ) : (
           <div>
@@ -491,7 +504,7 @@ export default function App() {
                  value={hostApiKey} 
                  onChange={e => setHostApiKey(e.target.value)} 
                  placeholder="Leave empty to use default..." 
-                 className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm" 
+                 className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm transition-all focus:border-anime-primary outline-none" 
                />
                <p className="text-xs text-gray-500 mt-1">
                  {isArabic 
@@ -541,10 +554,14 @@ export default function App() {
        <div className="relative z-10">
           {/* Header */}
           <header className="p-6 flex justify-between items-center border-b border-white/5 bg-anime-dark/50 backdrop-blur-md sticky top-0 z-50">
-             <h1 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-anime-primary to-anime-accent cursor-pointer" onClick={() => restartGame()}>AniQuiz AI</h1>
+             <h1 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-anime-primary to-anime-accent cursor-pointer hover:opacity-80 transition-opacity" onClick={() => restartGame()}>AniQuiz AI</h1>
              
              <div className="flex items-center gap-4">
-                {view === 'game' && <div className="text-sm font-bold bg-white/10 px-3 py-1 rounded-full">Score: {state.score}</div>}
+                {view === 'game' && (
+                  <div className={`text-sm font-bold bg-white/10 px-3 py-1 rounded-full transition-transform duration-200 ${scoreBump ? 'scale-125 bg-green-500/20 text-green-300' : ''}`}>
+                    Score: {state.score}
+                  </div>
+                )}
                 
                 {/* Gacha Button */}
                 {user && userProfile && (
@@ -580,12 +597,12 @@ export default function App() {
 
           <main className="container mx-auto px-4 py-8 md:py-12">
              
-             {/* Loading State */}
-             {(state.status === 'loading') && <LoadingSpinner message={isArabic ? "جاري التحميل..." : "Loading..."} />}
+             {/* Loading State - Showing Spinner during heavy fetching, Skeleton during transition if needed */}
+             {(state.status === 'loading') && <LoadingSpinner message={isArabic ? "جاري التحميل..." : "Summoning Knowledge..."} />}
              
              {/* Error State */}
              {state.status === 'error' && (
-                <div className="text-center p-8 glass-panel rounded-xl max-w-md mx-auto">
+                <div className="text-center p-8 glass-panel rounded-xl max-w-md mx-auto animate-shake">
                    <div className="text-red-400 text-5xl mb-4">⚠</div>
                    <p className="mb-6">{state.error}</p>
                    <Button onClick={() => setState(prev => ({ ...prev, status: 'idle', error: undefined }))}>Dismiss</Button>
@@ -607,28 +624,28 @@ export default function App() {
 
                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
                           {/* Single Player */}
-                          <button onClick={() => setView('single_setup')} className="group glass-panel p-6 rounded-3xl hover:bg-white/5 transition-all duration-300 border border-white/10 hover:border-anime-primary/50 text-left relative overflow-hidden">
+                          <button onClick={() => setView('single_setup')} className="group glass-panel p-6 rounded-3xl hover:bg-white/5 transition-all duration-300 border border-white/10 hover:border-anime-primary/50 text-left relative overflow-hidden transform hover:-translate-y-1">
                              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-5xl">👤</div>
                              <h3 className="text-xl font-bold mb-2 text-white group-hover:text-anime-primary transition-colors">Solo Play</h3>
                              <p className="text-gray-400 text-xs">Challenge the AI alone.</p>
                           </button>
 
                           {/* Arcade Mode */}
-                          <button onClick={() => setView('arcade')} className="group glass-panel p-6 rounded-3xl hover:bg-white/5 transition-all duration-300 border border-white/10 hover:border-yellow-500/50 text-left relative overflow-hidden">
+                          <button onClick={() => setView('arcade')} className="group glass-panel p-6 rounded-3xl hover:bg-white/5 transition-all duration-300 border border-white/10 hover:border-yellow-500/50 text-left relative overflow-hidden transform hover:-translate-y-1">
                              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-5xl">🕹️</div>
                              <h3 className="text-xl font-bold mb-2 text-white group-hover:text-yellow-400 transition-colors">Arcade Zone</h3>
                              <p className="text-gray-400 text-xs">Mini-games & Gacha.</p>
                           </button>
 
                           {/* Create Room */}
-                          <button onClick={() => setView('room_setup')} className="group glass-panel p-6 rounded-3xl hover:bg-white/5 transition-all duration-300 border border-white/10 hover:border-green-500/50 text-left relative overflow-hidden">
+                          <button onClick={() => setView('room_setup')} className="group glass-panel p-6 rounded-3xl hover:bg-white/5 transition-all duration-300 border border-white/10 hover:border-green-500/50 text-left relative overflow-hidden transform hover:-translate-y-1">
                              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-5xl">⚔️</div>
                              <h3 className="text-xl font-bold mb-2 text-white group-hover:text-green-400 transition-colors">Create Room</h3>
                              <p className="text-gray-400 text-xs">Host a lobby.</p>
                           </button>
 
                           {/* Join Room */}
-                          <button onClick={() => setView('join_room')} className="group glass-panel p-6 rounded-3xl hover:bg-white/5 transition-all duration-300 border border-white/10 hover:border-anime-accent/50 text-left relative overflow-hidden">
+                          <button onClick={() => setView('join_room')} className="group glass-panel p-6 rounded-3xl hover:bg-white/5 transition-all duration-300 border border-white/10 hover:border-anime-accent/50 text-left relative overflow-hidden transform hover:-translate-y-1">
                              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-5xl">🚪</div>
                              <h3 className="text-xl font-bold mb-2 text-white group-hover:text-anime-accent transition-colors">Join Room</h3>
                              <p className="text-gray-400 text-xs">Enter a party code.</p>
@@ -654,19 +671,22 @@ export default function App() {
                  {view === 'story' && <StoryMode onClose={() => setView('arcade')} />}
                  {view === 'memory' && <MemoryGame onExit={() => setView('arcade')} />}
                  {view === 'whack' && <WhackGame onExit={() => setView('arcade')} />}
+                 {view === 'silhouette' && <SilhouetteGame onExit={() => setView('arcade')} />}
+                 {view === 'chat' && <ChatGame onExit={() => setView('arcade')} />}
+                 {view === 'typing' && <TypingGame onExit={() => setView('arcade')} />}
 
                  {/* 5. Join Room View */}
                  {view === 'join_room' && (
-                    <div className="max-w-md mx-auto glass-panel p-8 rounded-3xl animate-fade-in">
+                    <div className="max-w-md mx-auto glass-panel p-8 rounded-3xl animate-fade-in-up">
                        <h2 className="text-2xl font-bold mb-6 text-center">Join Party</h2>
                        <div className="space-y-4">
                           <div>
                              <label className="block text-sm font-semibold mb-2 text-gray-400">Your Name</label>
-                             <input type="text" value={playerName} onChange={e => setPlayerName(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3" />
+                             <input type="text" value={playerName} onChange={e => setPlayerName(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none focus:border-anime-accent" />
                           </div>
                           <div>
                              <label className="block text-sm font-semibold mb-2 text-gray-400">Room Code</label>
-                             <input type="text" value={roomCodeInput} onChange={e => setRoomCodeInput(e.target.value.toUpperCase())} placeholder="ABCD12" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 tracking-widest font-mono text-center text-xl uppercase" />
+                             <input type="text" value={roomCodeInput} onChange={e => setRoomCodeInput(e.target.value.toUpperCase())} placeholder="ABCD12" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 tracking-widest font-mono text-center text-xl uppercase outline-none focus:border-anime-accent" />
                           </div>
                           <Button fullWidth onClick={handleJoinRoom} className="!bg-anime-accent">Join Room</Button>
                           <Button fullWidth variant="ghost" onClick={() => setView('home')}>Back</Button>
@@ -676,7 +696,7 @@ export default function App() {
 
                  {/* 6. Lobby View */}
                  {view === 'lobby' && room && (
-                    <div className="max-w-2xl mx-auto glass-panel p-8 rounded-3xl animate-fade-in text-center">
+                    <div className="max-w-2xl mx-auto glass-panel p-8 rounded-3xl animate-fade-in-up text-center">
                        <div className="mb-6">
                           <p className="text-gray-400 uppercase tracking-widest text-xs mb-2">Room Code</p>
                           <div className="text-5xl font-black font-mono tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-anime-primary to-anime-accent">{room.code || '...'}</div>
@@ -694,7 +714,7 @@ export default function App() {
                                 </h3>
                                 <div className="grid grid-cols-2 gap-2">
                                   {room.players.map(p => (
-                                      <div key={p.id} className={`p-3 rounded-xl border ${p.isHost ? 'border-yellow-500/50 bg-yellow-500/10' : 'border-white/10 bg-white/5'} flex items-center justify-between`}>
+                                      <div key={p.id} className={`p-3 rounded-xl border ${p.isHost ? 'border-yellow-500/50 bg-yellow-500/10' : 'border-white/10 bg-white/5'} flex items-center justify-between animate-fade-in`}>
                                         <span className="font-bold">{p.name}</span>
                                         {p.isHost && <span className="text-xs text-yellow-500">HOST</span>}
                                       </div>
@@ -730,14 +750,21 @@ export default function App() {
                  {view === 'game' && state.questions && state.questions.length > 0 && (
                    <div className="space-y-6">
                       {state.settings.gameMode === GameMode.TIME_ATTACK && <Timer timeLeft={state.timeLeft || 0} maxTime={QUESTION_TIMER_SECONDS} />}
+                      
+                      {/* 
+                         We use a Key here to force React to remount the QuestionCard 
+                         when currentIndex changes, triggering entrance animations 
+                      */}
                       <QuestionCard 
+                        key={state.currentIndex}
                         question={state.questions[state.currentIndex]} 
                         onAnswer={handleAnswer} 
                         selectedAnswer={state.answers[state.currentIndex]} 
                         isRevealed={isAnswerRevealed} 
                       />
+                      
                       {isAnswerRevealed && state.status !== 'completed' && (
-                        <div className="flex justify-center animate-fade-in">
+                        <div className="flex justify-center animate-fade-in-up">
                           <Button onClick={nextQuestion} variant={(state.settings.gameMode === GameMode.SURVIVAL && state.answers[state.currentIndex] !== state.questions[state.currentIndex].correctAnswer) ? 'secondary' : 'primary'}>
                              {state.questions && state.currentIndex === state.questions.length - 1 ? (isArabic ? 'إنهاء' : 'Finish') : (isArabic ? 'التالي' : 'Next Question')}
                           </Button>

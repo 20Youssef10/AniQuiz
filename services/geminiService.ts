@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { AnimeData, QuizQuestion, QuizSettings, QuestionType, Language, AIPersona, StoryNode } from '../types';
+import { AnimeData, QuizQuestion, QuizSettings, QuestionType, Language, AIPersona, StoryNode, Difficulty } from '../types';
 import { cleanDescription } from './aniListService';
 import { searchYouTubeVideo } from './youtubeService';
 
@@ -30,6 +30,19 @@ const getPersonaInstruction = (persona: AIPersona, lang: Language): string => {
   }
 };
 
+const getDifficultyInstruction = (difficulty: Difficulty): string => {
+  switch (difficulty) {
+    case Difficulty.EASY:
+      return "Focus on main protagonists, viral moments, iconic attacks (e.g., Kamehameha), and major plot summaries. Questions should be answerable by a casual viewer.";
+    case Difficulty.MEDIUM:
+      return "Focus on side characters, specific story arcs, ability mechanics, and character relationships. Questions require the user to have watched the series attentively.";
+    case Difficulty.HARD:
+      return "Focus on OBSCURE facts, DEEP lore, minor characters, specific chapter/episode details, and COMPARATIVE trivia (e.g., comparing stats, bounty amounts, or timeline events between characters). Questions must be challenging even for hardcore fans. Do NOT ask surface-level questions.";
+    default:
+      return "Mix of difficulties.";
+  }
+};
+
 export const generateQuizQuestions = async (
   animeList: AnimeData[],
   settings: QuizSettings,
@@ -57,6 +70,7 @@ export const generateQuizQuestions = async (
     : "The output content must be in English.";
 
   const personaInstruction = getPersonaInstruction(settings.aiPersona, settings.language);
+  const difficultyInstruction = getDifficultyInstruction(settings.difficulty);
   
   const spoilerInstruction = settings.spoilerProtection
     ? "STRICTLY AVOID spoilers from the manga that have not been animated yet. Do not ask about character deaths or major plot twists that happen late in the series unless they are common knowledge. Focus on Season 1-2 content or general trivia."
@@ -73,7 +87,7 @@ export const generateQuizQuestions = async (
     ${JSON.stringify(animeContext)}
 
     Rules:
-    1. Difficulty: ${settings.difficulty}.
+    1. Difficulty: ${settings.difficulty}. INSTRUCTION: ${difficultyInstruction}
     2. Language: ${settings.language}. ${langInstruction}
     3. Generate a mix of the following Question Types. Try to include at least 1-2 visual/audio questions (${QuestionType.IMAGE_GUESS} or ${QuestionType.OP_ED_GUESS}) if data permits. ALSO include at least 1 ${QuestionType.EMOJI_GUESS}:
        - ${QuestionType.MULTIPLE_CHOICE}
@@ -247,4 +261,23 @@ export const generateStoryNode = async (
     
     const data = JSON.parse(response.text || '{}');
     return data as StoryNode;
+};
+
+// --- Chat Mode ---
+
+export const createChatSession = (characterName: string, trait: string) => {
+  const apiKey = process.env.API_KEY;
+  if (!apiKey) throw new Error("API Key missing");
+  const ai = new GoogleGenAI({ apiKey });
+  
+  const systemInstruction = `You are roleplaying as ${characterName} from anime. 
+  Trait: ${trait}.
+  Keep responses short (under 50 words). 
+  Stay in character completely. Do not assist with non-anime tasks.
+  If the user says something weird, react as the character would.`;
+
+  return ai.chats.create({
+    model: MODEL_NAME,
+    config: { systemInstruction }
+  });
 };

@@ -2,20 +2,20 @@ import { AnimeData, ContentType, AnimeCharacter, QuizSettings } from '../types';
 
 const ANILIST_API_URL = 'https://graphql.anilist.co';
 
-// Robust fallback data with real character images (using MyAnimeList CDN for stability)
+// Robust fallback data with real character images (Using AniList CDN to avoid hotlink blocks from MAL)
 const FALLBACK_CHARS: AnimeCharacter[] = [
-  { id: 1, name: { full: 'Monkey D. Luffy' }, image: { large: 'https://cdn.myanimelist.net/images/characters/9/310307.jpg' } },
-  { id: 2, name: { full: 'Naruto Uzumaki' }, image: { large: 'https://cdn.myanimelist.net/images/characters/9/131317.jpg' } },
-  { id: 3, name: { full: 'Son Goku' }, image: { large: 'https://cdn.myanimelist.net/images/characters/6/277964.jpg' } },
-  { id: 4, name: { full: 'L Lawliet' }, image: { large: 'https://cdn.myanimelist.net/images/characters/10/246479.jpg' } },
-  { id: 5, name: { full: 'Levi Ackerman' }, image: { large: 'https://cdn.myanimelist.net/images/characters/2/241413.jpg' } },
-  { id: 6, name: { full: 'Ichigo Kurosaki' }, image: { large: 'https://cdn.myanimelist.net/images/characters/2/255555.jpg' } },
-  { id: 7, name: { full: 'Roronoa Zoro' }, image: { large: 'https://cdn.myanimelist.net/images/characters/3/100534.jpg' } },
-  { id: 8, name: { full: 'Tanjiro Kamado' }, image: { large: 'https://cdn.myanimelist.net/images/characters/8/382094.jpg' } },
-  { id: 9, name: { full: 'Saitama' }, image: { large: 'https://cdn.myanimelist.net/images/characters/11/294388.jpg' } },
-  { id: 10, name: { full: 'Satoru Gojo' }, image: { large: 'https://cdn.myanimelist.net/images/characters/16/413000.jpg' } },
-  { id: 11, name: { full: 'Killua Zoldyck' }, image: { large: 'https://cdn.myanimelist.net/images/characters/2/327426.jpg' } },
-  { id: 12, name: { full: 'Itachi Uchiha' }, image: { large: 'https://cdn.myanimelist.net/images/characters/3/131319.jpg' } },
+  { id: 1, name: { full: 'Monkey D. Luffy' }, image: { large: 'https://s4.anilist.co/file/anilistcdn/character/large/b40-q0Wea65t838s.png' } },
+  { id: 2, name: { full: 'Naruto Uzumaki' }, image: { large: 'https://s4.anilist.co/file/anilistcdn/character/large/b17-aX50nIPtQ510.png' } },
+  { id: 3, name: { full: 'Son Goku' }, image: { large: 'https://s4.anilist.co/file/anilistcdn/character/large/b246-t90e1t2R5p3N.png' } },
+  { id: 4, name: { full: 'L Lawliet' }, image: { large: 'https://s4.anilist.co/file/anilistcdn/character/large/b71-4m9u20d3Lh5F.png' } },
+  { id: 5, name: { full: 'Levi Ackerman' }, image: { large: 'https://s4.anilist.co/file/anilistcdn/character/large/b45627-p5F1v2Q0W1kC.png' } },
+  { id: 6, name: { full: 'Ichigo Kurosaki' }, image: { large: 'https://s4.anilist.co/file/anilistcdn/character/large/b5-d14k1213f3g.png' } },
+  { id: 7, name: { full: 'Roronoa Zoro' }, image: { large: 'https://s4.anilist.co/file/anilistcdn/character/large/b62-H6h51336d15D.png' } },
+  { id: 8, name: { full: 'Tanjiro Kamado' }, image: { large: 'https://s4.anilist.co/file/anilistcdn/character/large/b126071-hu01362d16.png' } },
+  { id: 9, name: { full: 'Saitama' }, image: { large: 'https://s4.anilist.co/file/anilistcdn/character/large/b73935-v125136.png' } },
+  { id: 10, name: { full: 'Satoru Gojo' }, image: { large: 'https://s4.anilist.co/file/anilistcdn/character/large/b127271-O8280326.png' } },
+  { id: 11, name: { full: 'Killua Zoldyck' }, image: { large: 'https://s4.anilist.co/file/anilistcdn/character/large/b27-Jjfe012643.png' } },
+  { id: 12, name: { full: 'Itachi Uchiha' }, image: { large: 'https://s4.anilist.co/file/anilistcdn/character/large/b14-An15136.png' } },
 ];
 
 const getFallbackCharacters = (count: number): AnimeCharacter[] => {
