@@ -15,7 +15,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, selectedAnswer, o
 
   // Reset blur when question changes
   useEffect(() => {
-    if (question.type === QuestionType.IMAGE_GUESS) {
+    if (question.type === QuestionType.IMAGE_GUESS || question.type === QuestionType.OP_ED_GUESS) {
       setBlurAmount(20); // Start with heavy blur
     } else {
       setBlurAmount(0);
@@ -25,7 +25,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, selectedAnswer, o
   // Gradually reduce blur over time
   useEffect(() => {
     let interval: any;
-    if (question.type === QuestionType.IMAGE_GUESS && !isRevealed && blurAmount > 0) {
+    if ((question.type === QuestionType.IMAGE_GUESS || question.type === QuestionType.OP_ED_GUESS) && !isRevealed && blurAmount > 0) {
       interval = setInterval(() => {
         setBlurAmount(prev => Math.max(0, prev - 1)); // Reduce blur by 1px every 500ms
       }, 500);
@@ -81,7 +81,9 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, selectedAnswer, o
 
         {/* Question Content */}
         <div className="space-y-6 mb-8">
-          {question.imageUrl && (
+          
+          {/* Image Guess Visual */}
+          {question.type === QuestionType.IMAGE_GUESS && question.imageUrl && (
             <div className="flex justify-center flex-col items-center">
               <div className="relative w-full max-w-xs aspect-square md:aspect-video rounded-xl overflow-hidden shadow-lg border border-white/10 bg-black/50">
                 <img 
@@ -97,6 +99,35 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, selectedAnswer, o
                 )}
               </div>
             </div>
+          )}
+
+          {/* OP/ED Video Player */}
+          {question.type === QuestionType.OP_ED_GUESS && question.videoId && (
+             <div className="flex justify-center flex-col items-center">
+                <div className="relative w-full max-w-lg aspect-video rounded-xl overflow-hidden shadow-lg border border-white/10 bg-black">
+                   <iframe 
+                      width="100%" 
+                      height="100%" 
+                      src={`https://www.youtube.com/embed/${question.videoId}?autoplay=1&controls=0&modestbranding=1&showinfo=0&rel=0`} 
+                      title="YouTube video player" 
+                      frameBorder="0" 
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                      allowFullScreen
+                      style={{ 
+                          filter: `blur(${blurAmount}px)`, 
+                          pointerEvents: isRevealed ? 'auto' : 'none', // Prevent clicking title/pause while guessing
+                          transition: 'filter 1s ease-out'
+                      }}
+                   ></iframe>
+                   {!isRevealed && blurAmount > 0 && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                         <div className="bg-black/60 px-3 py-1 rounded text-sm text-white backdrop-blur-sm">
+                            Listen closely...
+                         </div>
+                      </div>
+                   )}
+                </div>
+             </div>
           )}
           
           <h2 className="text-xl md:text-2xl font-bold text-white leading-relaxed text-center md:text-left drop-shadow-md">

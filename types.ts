@@ -77,6 +77,8 @@ export interface QuizQuestion {
   explanation: string;
   relatedAnimeTitle?: string;
   imageUrl?: string; // Optional image for the question
+  mediaQuery?: string; // Search query for YouTube
+  videoId?: string; // YouTube Video ID
 }
 
 export interface QuizSettings {

@@ -1,6 +1,7 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { AnimeData, QuizQuestion, QuizSettings, QuestionType, Language, AIPersona } from '../types';
 import { cleanDescription } from './aniListService';
+import { searchYouTubeVideo } from './youtubeService';
 
 const MODEL_NAME = 'gemini-3-flash-preview';
 
@@ -36,7 +37,6 @@ export const generateQuizQuestions = async (
 ): Promise<QuizQuestion[]> => {
   
   // Use custom key if provided, otherwise fall back to environment variable
-  // Note: process.env.API_KEY is polyfilled by Vite
   const apiKey = customApiKey || process.env.API_KEY;
   if (!apiKey) {
     throw new Error("API Key is missing. Please provide a valid Gemini API Key.");
@@ -91,15 +91,20 @@ export const generateQuizQuestions = async (
        - If you choose ${QuestionType.QUOTE_GUESS}, use your internal knowledge to select a famous or memorable quote from the specific anime/manga in the context.
        - The Question Text must be formatted as: "Who said this quote? \"[Insert Quote Here]\""
        - Ensure the correct answer is the name of the character who said it.
+       
+    6. **Opening/Ending Guess Rules**:
+       - If you choose ${QuestionType.OP_ED_GUESS}, you MUST provide a 'mediaQuery' field string.
+       - The 'mediaQuery' should be a YouTube search string like "Attack on Titan Opening 1" or "Unravel Tokyo Ghoul Opening".
+       - The question text can be: "Which anime features this opening song?", "Who is the artist of this ending?", or "What specific object appears at the end of this sequence?".
     
-    6. **AI Persona & Explanation**:
+    7. **AI Persona & Explanation**:
        - ${personaInstruction}
        - The 'explanation' field MUST be written in this persona's voice.
     
-    7. **Spoiler Guard**:
+    8. **Spoiler Guard**:
        - ${spoilerInstruction}
     
-    8. **General Rules**:
+    9. **General Rules**:
        - Ensure questions are factually accurate.
        - Do NOT reproduce large chunks of copyrighted text.
        - The output MUST be a valid JSON array.
@@ -135,7 +140,8 @@ export const generateQuizQuestions = async (
               correctAnswer: { type: Type.STRING },
               explanation: { type: Type.STRING },
               relatedAnimeTitle: { type: Type.STRING },
-              imageUrl: { type: Type.STRING }
+              imageUrl: { type: Type.STRING },
+              mediaQuery: { type: Type.STRING }
             },
             required: ["id", "text", "type", "options", "correctAnswer", "explanation"]
           }
@@ -147,13 +153,27 @@ export const generateQuizQuestions = async (
     if (!jsonText) throw new Error("Empty response from AI");
 
     const parsed = JSON.parse(jsonText);
-    const questions = Array.isArray(parsed) ? parsed : [];
+    const rawQuestions = Array.isArray(parsed) ? parsed : [];
+    
+    // Post-processing: Fetch YouTube Videos for OP_ED_GUESS
+    const processedQuestions = await Promise.all(rawQuestions.map(async (q: any) => {
+        if (q.type === QuestionType.OP_ED_GUESS && q.mediaQuery) {
+            const videoId = await searchYouTubeVideo(q.mediaQuery);
+            if (videoId) {
+                return { ...q, videoId };
+            }
+            // Fallback if video fetch fails: Change type to simple trivia if possible, or keep as is (might not have media)
+            return q; 
+        }
+        return q;
+    }));
     
     // Safety check
-    return questions.slice(0, settings.questionCount);
+    return processedQuestions.slice(0, settings.questionCount);
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Gemini Generation Error:", error);
-    throw new Error("Failed to generate questions. Please try again.");
+    const message = error.message || "Unknown API Error";
+    throw new Error(`AI Gen Error: ${message}.`);
   }
 };

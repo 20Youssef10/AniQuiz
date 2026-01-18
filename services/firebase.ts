@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously } from 'firebase/auth';
+import { getAuth, signInAnonymously, User } from 'firebase/auth';
 import { getFirestore, collection, addDoc, getDoc, doc, onSnapshot, updateDoc, arrayUnion, query, where, getDocs } from 'firebase/firestore';
 import { QuizQuestion, QuizSettings, Room, Player } from '../types';
 
@@ -17,9 +17,20 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 // Helper to authenticate anonymously
-const ensureAuth = async () => {
-  if (!auth.currentUser) {
-    await signInAnonymously(auth);
+const ensureAuth = async (): Promise<User> => {
+  try {
+    // Wait for the initial auth state to be resolved
+    await auth.authStateReady();
+
+    if (!auth.currentUser) {
+      const userCredential = await signInAnonymously(auth);
+      return userCredential.user;
+    }
+    
+    return auth.currentUser;
+  } catch (error) {
+    console.error("Auth initialization failed:", error);
+    throw new Error("Could not authenticate. Please check your connection.");
   }
 };
 
@@ -32,17 +43,28 @@ export interface ChallengeData {
 }
 
 export const createChallenge = async (questions: QuizQuestion[], settings: QuizSettings): Promise<string> => {
-  await ensureAuth();
+  const user = await ensureAuth();
+  
   try {
-    const docRef = await addDoc(collection(db, "challenges"), {
-      questions,
-      settings,
+    // Sanitize data to remove undefined values (unsupported by Firestore)
+    const cleanQuestions = JSON.parse(JSON.stringify(questions));
+    const cleanSettings = JSON.parse(JSON.stringify(settings));
+    
+    // Flatten data for the document
+    const docData = {
+      questions: cleanQuestions,
+      settings: cleanSettings,
+      creatorId: user.uid,
+      userId: user.uid,
+      uid: user.uid, // Adding 'uid' explicitly as some rules might check for it
       createdAt: Date.now()
-    });
+    };
+
+    const docRef = await addDoc(collection(db, "challenges"), docData);
     return docRef.id;
   } catch (e) {
     console.error("Error creating challenge: ", e);
-    throw new Error("Could not create challenge link.");
+    throw new Error("Could not create challenge link. Missing permissions or network error.");
   }
 };
 
@@ -70,7 +92,7 @@ const generateRoomCode = () => {
 };
 
 export const createRoom = async (playerName: string, settings: QuizSettings): Promise<{ roomId: string, playerId: string, code: string }> => {
-  await ensureAuth();
+  const user = await ensureAuth();
   try {
     const playerId = `host_${Date.now()}`;
     const code = generateRoomCode();
@@ -81,14 +103,18 @@ export const createRoom = async (playerName: string, settings: QuizSettings): Pr
       score: 0,
       isHost: true
     };
+    
+    const cleanSettings = JSON.parse(JSON.stringify(settings));
 
-    const roomData: Omit<Room, 'id'> = {
+    const roomData = {
       code,
       hostId: playerId,
       status: 'waiting',
-      settings,
+      settings: cleanSettings,
       players: [hostPlayer],
-      createdAt: Date.now()
+      createdAt: Date.now(),
+      ownerId: user.uid,
+      uid: user.uid 
     };
 
     const docRef = await addDoc(collection(db, "rooms"), roomData);
@@ -142,9 +168,10 @@ export const listenToRoom = (roomId: string, callback: (room: Room) => void) => 
 export const startRoomGame = async (roomId: string, questions: QuizQuestion[]) => {
   await ensureAuth();
   try {
+    const cleanQuestions = JSON.parse(JSON.stringify(questions));
     await updateDoc(doc(db, "rooms", roomId), {
       status: 'playing',
-      questions: questions
+      questions: cleanQuestions
     });
   } catch (e) {
     console.error("Error starting game:", e);
@@ -153,8 +180,6 @@ export const startRoomGame = async (roomId: string, questions: QuizQuestion[]) =
 };
 
 export const updatePlayerScore = async (roomId: string, players: Player[]) => {
-    // In a real app we might update just the specific player field using complex logic, 
-    // but replacing the array is simpler for this scope given concurrency isn't high.
     await ensureAuth();
     await updateDoc(doc(db, "rooms", roomId), {
         players: players
