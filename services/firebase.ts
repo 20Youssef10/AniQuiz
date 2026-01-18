@@ -46,7 +46,8 @@ export const loginWithGoogle = async () => {
   const provider = new GoogleAuthProvider();
   try {
     const result = await signInWithPopup(auth, provider);
-    await createUserDocument(result.user);
+    // Soft fail on Firestore interactions to allow login even if DB rules block it
+    await createUserDocument(result.user).catch(e => console.warn("Firestore profile init failed:", e));
     return result.user;
   } catch (error: any) {
     throw new Error(error.message);
@@ -56,6 +57,8 @@ export const loginWithGoogle = async () => {
 export const loginWithEmail = async (email: string, pass: string) => {
   try {
     const result = await signInWithEmailAndPassword(auth, email, pass);
+    // Optional: Ensure doc exists on login too
+    await createUserDocument(result.user).catch(e => console.warn("Firestore profile init failed:", e));
     return result.user;
   } catch (error: any) {
     throw new Error(error.message);
@@ -66,7 +69,7 @@ export const registerWithEmail = async (email: string, pass: string, name: strin
   try {
     const result = await createUserWithEmailAndPassword(auth, email, pass);
     await updateProfile(result.user, { displayName: name });
-    await createUserDocument(result.user);
+    await createUserDocument(result.user).catch(e => console.warn("Firestore profile init failed:", e));
     return result.user;
   } catch (error: any) {
     throw new Error(error.message);
@@ -81,32 +84,35 @@ export const logout = async () => {
 const createUserDocument = async (user: User) => {
   if (!user) return;
   const userRef = doc(db, "users", user.uid);
-  const snapshot = await getDoc(userRef);
+  
+  try {
+    // This getDoc might throw "Missing or insufficient permissions" if rules are strict
+    const snapshot = await getDoc(userRef);
 
-  if (!snapshot.exists()) {
-    const { email, displayName, photoURL, uid } = user;
-    const initialStats = getUserStats(); // Get default Level 0 stats
-    
-    const newProfile: UserProfile = {
-      uid,
-      email: email || '',
-      displayName: displayName || 'Anime Fan',
-      photoURL: photoURL || '',
-      xp: 0,
-      level: 1,
-      title: initialStats.title,
-      gamesPlayed: 0,
-      achievements: [],
-      matchHistory: [],
-      inventory: [],
-      lastGachaDate: 0
-    };
+    if (!snapshot.exists()) {
+      const { email, displayName, photoURL, uid } = user;
+      const initialStats = getUserStats(); // Get default Level 0 stats
+      
+      const newProfile: UserProfile = {
+        uid,
+        email: email || '',
+        displayName: displayName || 'Anime Fan',
+        photoURL: photoURL || '',
+        xp: 0,
+        level: 1,
+        title: initialStats.title,
+        gamesPlayed: 0,
+        achievements: [],
+        matchHistory: [],
+        inventory: [],
+        lastGachaDate: 0
+      };
 
-    try {
       await setDoc(userRef, newProfile);
-    } catch (e) {
-      console.error("Error creating user profile", e);
     }
+  } catch (e) {
+    console.warn("Error creating/accessing user profile (likely permission issues):", e);
+    // We swallow the error here so auth flow continues
   }
 };
 
@@ -117,44 +123,57 @@ export const getUserProfile = async (uid: string): Promise<UserProfile | null> =
     if (snapshot.exists()) return snapshot.data() as UserProfile;
     return null;
   } catch (e) {
+    console.warn("Error fetching user profile:", e);
     return null;
   }
 };
 
 export const subscribeToUserProfile = (uid: string, callback: (profile: UserProfile) => void) => {
-  return onSnapshot(doc(db, "users", uid), (doc) => {
-    if (doc.exists()) {
-      callback(doc.data() as UserProfile);
+  return onSnapshot(
+    doc(db, "users", uid), 
+    (doc) => {
+      if (doc.exists()) {
+        callback(doc.data() as UserProfile);
+      }
+    },
+    (error) => {
+      console.warn("UserProfile sync failed (likely permissions):", error);
     }
-  });
+  );
 };
 
 export const saveGameResultToProfile = async (uid: string, record: MatchRecord, newAchievements: string[]) => {
-  const userRef = doc(db, "users", uid);
-  
-  const snap = await getDoc(userRef);
-  if (!snap.exists()) return;
-  
-  const currentData = snap.data() as UserProfile;
-  const newXp = (currentData.xp || 0) + record.xpEarned;
-  
-  const newLevel = Math.floor(Math.sqrt(newXp));
+  try {
+    const userRef = doc(db, "users", uid);
+    const snap = await getDoc(userRef);
+    if (!snap.exists()) return;
+    
+    const currentData = snap.data() as UserProfile;
+    const newXp = (currentData.xp || 0) + record.xpEarned;
+    const newLevel = Math.floor(Math.sqrt(newXp));
 
-  await updateDoc(userRef, {
-    xp: newXp,
-    level: newLevel,
-    gamesPlayed: (currentData.gamesPlayed || 0) + 1,
-    matchHistory: arrayUnion(record),
-    ...(newAchievements.length > 0 && { achievements: arrayUnion(...newAchievements) })
-  });
+    await updateDoc(userRef, {
+      xp: newXp,
+      level: newLevel,
+      gamesPlayed: (currentData.gamesPlayed || 0) + 1,
+      matchHistory: arrayUnion(record),
+      ...(newAchievements.length > 0 && { achievements: arrayUnion(...newAchievements) })
+    });
+  } catch (e) {
+    console.warn("Failed to save game result:", e);
+  }
 };
 
 export const saveGachaItem = async (uid: string, item: GachaCard) => {
-  const userRef = doc(db, "users", uid);
-  await updateDoc(userRef, {
-    inventory: arrayUnion(item),
-    lastGachaDate: Date.now()
-  });
+  try {
+    const userRef = doc(db, "users", uid);
+    await updateDoc(userRef, {
+      inventory: arrayUnion(item),
+      lastGachaDate: Date.now()
+    });
+  } catch (e) {
+    console.warn("Failed to save gacha item:", e);
+  }
 };
 
 
@@ -293,11 +312,17 @@ export const joinRoom = async (code: string, playerName: string): Promise<{ room
 };
 
 export const listenToRoom = (roomId: string, callback: (room: Room) => void) => {
-  return onSnapshot(doc(db, "rooms", roomId), (docSnap) => {
-    if (docSnap.exists()) {
-      callback({ id: docSnap.id, ...docSnap.data() } as Room);
+  return onSnapshot(
+    doc(db, "rooms", roomId), 
+    (docSnap) => {
+      if (docSnap.exists()) {
+        callback({ id: docSnap.id, ...docSnap.data() } as Room);
+      }
+    },
+    (error) => {
+      console.warn("Room listener error:", error);
     }
-  });
+  );
 };
 
 export const startRoomGame = async (roomId: string, questions: QuizQuestion[]) => {
