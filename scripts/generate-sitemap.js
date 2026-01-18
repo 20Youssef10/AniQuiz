@@ -55,11 +55,6 @@ const writeFiles = () => {
   // Write robots.txt
   fs.writeFileSync(path.join(publicDir, 'robots.txt'), generateRobotsTxt());
   console.log('✅ Generated public/robots.txt');
-
-  // Write Google Site Verification
-  const googleVerificationContent = 'google-site-verification: google21f689fa3bb754d0';
-  fs.writeFileSync(path.join(publicDir, 'google21f689fa3bb754d0.html'), googleVerificationContent);
-  console.log('✅ Generated public/google21f689fa3bb754d0.html');
 };
 
 writeFiles();
