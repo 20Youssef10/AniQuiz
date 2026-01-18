@@ -5,6 +5,60 @@ import { searchYouTubeVideo } from './youtubeService';
 
 const MODEL_NAME = 'gemini-2.5-flash';
 
+// --- Helper: Decode HTML Entities for OpenTDB ---
+const decodeHtml = (html: string) => {
+  const txt = document.createElement("textarea");
+  txt.innerHTML = html;
+  return txt.value;
+};
+
+// --- OpenTDB Integration ---
+const fetchOpenTDBQuestions = async (count: number, difficulty: Difficulty): Promise<QuizQuestion[]> => {
+  if (count <= 0) return [];
+
+  // Map Difficulty to OpenTDB format
+  const diffMap = {
+    [Difficulty.EASY]: 'easy',
+    [Difficulty.MEDIUM]: 'medium',
+    [Difficulty.HARD]: 'hard',
+  };
+  const diffParam = diffMap[difficulty] || 'medium';
+
+  try {
+    // Category 31 is Anime & Manga
+    const url = `https://opentdb.com/api.php?amount=${count}&category=31&difficulty=${diffParam}`;
+    const res = await fetch(url);
+    const data = await res.json();
+
+    if (data.response_code !== 0 || !data.results) {
+      console.warn("OpenTDB returned no results or error code:", data.response_code);
+      return [];
+    }
+
+    return data.results.map((item: any, idx: number) => {
+      // Shuffle options including correct answer
+      const allOptions = [...item.incorrect_answers, item.correct_answer].sort(() => Math.random() - 0.5);
+      
+      // Determine type
+      const qType = item.type === 'boolean' ? QuestionType.TRUE_FALSE : QuestionType.MULTIPLE_CHOICE;
+
+      return {
+        id: `otdb-${Date.now()}-${idx}`,
+        text: decodeHtml(item.question),
+        type: qType,
+        options: allOptions.map(decodeHtml),
+        correctAnswer: decodeHtml(item.correct_answer),
+        explanation: "Answer provided by Open Trivia DB.", // OpenTDB doesn't provide explanations
+        relatedAnimeTitle: "General Anime Trivia"
+      } as QuizQuestion;
+    });
+
+  } catch (e) {
+    console.warn("Failed to fetch from OpenTDB, falling back to full Gemini generation.", e);
+    return [];
+  }
+};
+
 const getPersonaInstruction = (persona: AIPersona, lang: Language): string => {
   const isArabic = lang === Language.ARABIC;
   
@@ -43,20 +97,18 @@ const getDifficultyInstruction = (difficulty: Difficulty): string => {
   }
 };
 
-export const generateQuizQuestions = async (
+// --- Internal Gemini Generation Logic ---
+const generateGeminiBatch = async (
+  count: number,
   animeList: AnimeData[],
   settings: QuizSettings,
-  customApiKey?: string
+  apiKey: string
 ): Promise<QuizQuestion[]> => {
+  if (count <= 0) return [];
   
-  const apiKey = customApiKey || process.env.API_KEY;
-  if (!apiKey) {
-    throw new Error("API Key is missing. Please provide a valid Gemini API Key.");
-  }
-
   const ai = new GoogleGenAI({ apiKey });
 
-  // 1. Prepare Context
+  // Prepare Context
   const animeContext = animeList.map(a => ({
     title: a.title.english || a.title.romaji,
     genres: a.genres,
@@ -76,8 +128,8 @@ export const generateQuizQuestions = async (
     ? "STRICTLY AVOID spoilers from the manga that have not been animated yet. Do not ask about character deaths or major plot twists that happen late in the series unless they are common knowledge. Focus on Season 1-2 content or general trivia."
     : "You may include questions about manga-only events if the Content Type is Manga, otherwise keep it balanced.";
 
-  // Request extra questions (buffer) to allow filtering out invalid media questions without falling short
-  const requestedCount = settings.questionCount + 3;
+  // Request a few extra to account for filtering
+  const requestedCount = count + 2;
 
   const prompt = `
     You are an expert anime quiz master.
@@ -198,17 +250,75 @@ export const generateQuizQuestions = async (
         return q;
     }));
     
-    // Remove nulls (failed media questions)
-    const validQuestions = processedQuestions.filter(q => q !== null);
-    
-    // Return requested amount
-    return validQuestions.slice(0, settings.questionCount);
+    return processedQuestions.filter(q => q !== null);
 
   } catch (error: any) {
     console.error("Gemini Generation Error:", error);
-    const message = error.message || "Unknown API Error";
-    throw new Error(`AI Gen Error: ${message}.`);
+    return []; // Return empty so logic can fallback or just use what we have
   }
+};
+
+export const generateQuizQuestions = async (
+  animeList: AnimeData[],
+  settings: QuizSettings,
+  customApiKey?: string
+): Promise<QuizQuestion[]> => {
+  
+  const apiKey = customApiKey || process.env.API_KEY;
+  if (!apiKey) {
+    throw new Error("API Key is missing. Please provide a valid Gemini API Key.");
+  }
+
+  const targetTotal = settings.questionCount;
+  let geminiQuestions: QuizQuestion[] = [];
+  let openTdbQuestions: QuizQuestion[] = [];
+
+  // Determine split strategy
+  // OpenTDB only supports English. If Arabic, use 100% Gemini.
+  const useOpenTDB = settings.language === Language.ENGLISH;
+  
+  if (useOpenTDB) {
+      // Aim for 50/50 split
+      const openTdbCount = Math.floor(targetTotal / 2);
+      const geminiCount = targetTotal - openTdbCount;
+
+      console.log(`Fetching: ${openTdbCount} from OpenTDB, ${geminiCount} from Gemini`);
+
+      // Execute in parallel
+      const [otdbRes, geminiRes] = await Promise.all([
+          fetchOpenTDBQuestions(openTdbCount, settings.difficulty),
+          generateGeminiBatch(geminiCount, animeList, settings, apiKey)
+      ]);
+
+      openTdbQuestions = otdbRes;
+      geminiQuestions = geminiRes;
+
+      // If OpenTDB failed completely, fill gap with Gemini? 
+      // For now, if OpenTDB fails, we just rely on whatever Gemini returned. 
+      // If that's too few, we could trigger another Gemini call, 
+      // but for simplicity and speed, we will just proceed with what we have 
+      // or try to fetch more Gemini if OpenTDB returned 0.
+      if (openTdbQuestions.length === 0 && geminiCount < targetTotal) {
+          const remainder = targetTotal - geminiQuestions.length;
+          if (remainder > 0) {
+              const extraGemini = await generateGeminiBatch(remainder, animeList, settings, apiKey);
+              geminiQuestions = [...geminiQuestions, ...extraGemini];
+          }
+      }
+
+  } else {
+      // 100% Gemini (Arabic or other constraint)
+      geminiQuestions = await generateGeminiBatch(targetTotal, animeList, settings, apiKey);
+  }
+
+  // Combine
+  let combined = [...openTdbQuestions, ...geminiQuestions];
+  
+  // Shuffle the final mix
+  combined.sort(() => Math.random() - 0.5);
+
+  // Ensure we don't exceed requested count (though unlikely to hurt)
+  return combined.slice(0, targetTotal);
 };
 
 // --- Story Mode ---
