@@ -3,7 +3,7 @@ import { AnimeData, QuizQuestion, QuizSettings, QuestionType, Language, AIPerson
 import { cleanDescription } from './aniListService';
 import { searchYouTubeVideo } from './youtubeService';
 
-const MODEL_NAME = 'gemini-3-flash-preview';
+const MODEL_NAME = 'gemini-2.5-flash';
 
 const getPersonaInstruction = (persona: AIPersona, lang: Language): string => {
   const isArabic = lang === Language.ARABIC;
