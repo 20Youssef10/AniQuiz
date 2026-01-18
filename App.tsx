@@ -75,7 +75,7 @@ export default function App() {
                ...prev,
                status: 'playing',
                questions: updatedRoom.questions || [],
-               settings: updatedRoom.settings,
+               settings: updatedRoom.settings || prev.settings,
                currentIndex: 0,
                score: 0,
                answers: {},
@@ -100,7 +100,7 @@ export default function App() {
         setState(prev => ({
           ...prev,
           status: 'idle',
-          questions: challengeData.questions,
+          questions: challengeData.questions || [],
           settings: challengeData.settings,
         }));
         setView('single_setup'); // Go to setup but with pre-loaded data logic handled in render
@@ -175,7 +175,7 @@ export default function App() {
 
   const startGameSinglePlayer = async () => {
     // If questions pre-loaded (Challenge Link)
-    if (state.questions.length > 0 && state.status !== 'playing') {
+    if (state.questions && state.questions.length > 0 && state.status !== 'playing') {
        playSound('start');
        setState(prev => ({
          ...prev,
@@ -285,7 +285,7 @@ export default function App() {
     }
 
     setIsAnswerRevealed(false);
-    if (state.currentIndex < state.questions.length - 1) {
+    if (state.questions && state.currentIndex < state.questions.length - 1) {
       setState(prev => ({ 
         ...prev, 
         currentIndex: prev.currentIndex + 1,
@@ -523,47 +523,55 @@ export default function App() {
                     <div className="max-w-2xl mx-auto glass-panel p-8 rounded-3xl animate-fade-in text-center">
                        <div className="mb-6">
                           <p className="text-gray-400 uppercase tracking-widest text-xs mb-2">Room Code</p>
-                          <div className="text-5xl font-black font-mono tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-anime-primary to-anime-accent">{room.code}</div>
+                          <div className="text-5xl font-black font-mono tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-anime-primary to-anime-accent">{room.code || '...'}</div>
                        </div>
                        
-                       <div className="mb-8">
-                          <h3 className="text-xl font-bold mb-4 flex items-center justify-center gap-2">
-                             Players <span className="bg-white/10 text-xs px-2 py-1 rounded-full">{room.players.length}</span>
-                          </h3>
-                          <div className="grid grid-cols-2 gap-2">
-                             {room.players.map(p => (
-                                <div key={p.id} className={`p-3 rounded-xl border ${p.isHost ? 'border-yellow-500/50 bg-yellow-500/10' : 'border-white/10 bg-white/5'} flex items-center justify-between`}>
-                                   <span className="font-bold">{p.name}</span>
-                                   {p.isHost && <span className="text-xs text-yellow-500">HOST</span>}
-                                </div>
-                             ))}
-                          </div>
-                       </div>
-
-                       <div className="bg-black/30 p-4 rounded-xl mb-6 text-left">
-                          <p className="text-xs text-gray-500 mb-2 uppercase">Settings</p>
-                          <div className="flex flex-wrap gap-2">
-                             <span className="text-xs bg-white/10 px-2 py-1 rounded">{room.settings.difficulty}</span>
-                             <span className="text-xs bg-white/10 px-2 py-1 rounded">{room.settings.gameMode}</span>
-                             <span className="text-xs bg-white/10 px-2 py-1 rounded">{room.settings.questionCount} Qs</span>
-                          </div>
-                       </div>
-
-                       {room.hostId === playerId ? (
-                          <div className="space-y-3">
-                             <Button fullWidth onClick={handleStartRoomGame} className="!bg-green-600 text-lg py-4">Start Game</Button>
-                             <p className="text-xs text-gray-500">This will generate questions and start for everyone.</p>
+                       {!room.settings || !room.players ? (
+                          <div className="py-8">
+                              <LoadingSpinner message={isArabic ? "جاري الانضمام..." : "Joining Room..."} />
                           </div>
                        ) : (
-                          <div className="flex flex-col items-center justify-center p-4">
-                             <LoadingSpinner message="Waiting for host to start..." />
-                          </div>
+                          <>
+                            <div className="mb-8">
+                                <h3 className="text-xl font-bold mb-4 flex items-center justify-center gap-2">
+                                  Players <span className="bg-white/10 text-xs px-2 py-1 rounded-full">{room.players.length}</span>
+                                </h3>
+                                <div className="grid grid-cols-2 gap-2">
+                                  {room.players.map(p => (
+                                      <div key={p.id} className={`p-3 rounded-xl border ${p.isHost ? 'border-yellow-500/50 bg-yellow-500/10' : 'border-white/10 bg-white/5'} flex items-center justify-between`}>
+                                        <span className="font-bold">{p.name}</span>
+                                        {p.isHost && <span className="text-xs text-yellow-500">HOST</span>}
+                                      </div>
+                                  ))}
+                                </div>
+                            </div>
+
+                            <div className="bg-black/30 p-4 rounded-xl mb-6 text-left">
+                                <p className="text-xs text-gray-500 mb-2 uppercase">Settings</p>
+                                <div className="flex flex-wrap gap-2">
+                                  <span className="text-xs bg-white/10 px-2 py-1 rounded">{room.settings.difficulty}</span>
+                                  <span className="text-xs bg-white/10 px-2 py-1 rounded">{room.settings.gameMode}</span>
+                                  <span className="text-xs bg-white/10 px-2 py-1 rounded">{room.settings.questionCount} Qs</span>
+                                </div>
+                            </div>
+
+                            {room.hostId === playerId ? (
+                                <div className="space-y-3">
+                                  <Button fullWidth onClick={handleStartRoomGame} className="!bg-green-600 text-lg py-4">Start Game</Button>
+                                  <p className="text-xs text-gray-500">This will generate questions and start for everyone.</p>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center p-4">
+                                  <LoadingSpinner message="Waiting for host to start..." />
+                                </div>
+                            )}
+                          </>
                        )}
                     </div>
                  )}
 
                  {/* 5. Game View */}
-                 {view === 'game' && state.questions.length > 0 && (
+                 {view === 'game' && state.questions && state.questions.length > 0 && (
                    <div className="space-y-6">
                       {state.settings.gameMode === GameMode.TIME_ATTACK && <Timer timeLeft={state.timeLeft || 0} maxTime={QUESTION_TIMER_SECONDS} />}
                       <QuestionCard 
@@ -575,7 +583,7 @@ export default function App() {
                       {isAnswerRevealed && state.status !== 'completed' && (
                         <div className="flex justify-center animate-fade-in">
                           <Button onClick={nextQuestion} variant={(state.settings.gameMode === GameMode.SURVIVAL && state.answers[state.currentIndex] !== state.questions[state.currentIndex].correctAnswer) ? 'secondary' : 'primary'}>
-                             {state.currentIndex === state.questions.length - 1 ? (isArabic ? 'إنهاء' : 'Finish') : (isArabic ? 'التالي' : 'Next Question')}
+                             {state.questions && state.currentIndex === state.questions.length - 1 ? (isArabic ? 'إنهاء' : 'Finish') : (isArabic ? 'التالي' : 'Next Question')}
                           </Button>
                         </div>
                       )}

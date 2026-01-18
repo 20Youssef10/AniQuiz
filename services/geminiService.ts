@@ -48,7 +48,7 @@ export const generateQuizQuestions = async (
   const animeContext = animeList.map(a => ({
     title: a.title.english || a.title.romaji,
     genres: a.genres,
-    characters: a.characters?.nodes.map(c => ({ name: c.name.full, image: c.image.large })),
+    characters: a.characters?.nodes?.map(c => ({ name: c.name.full, image: c.image.large })) || [],
     bannerImage: a.bannerImage,
     summary: cleanDescription(a.description || '').substring(0, 300) + '...',
   }));
@@ -146,7 +146,8 @@ export const generateQuizQuestions = async (
     const jsonText = response.text;
     if (!jsonText) throw new Error("Empty response from AI");
 
-    const questions = JSON.parse(jsonText) as QuizQuestion[];
+    const parsed = JSON.parse(jsonText);
+    const questions = Array.isArray(parsed) ? parsed : [];
     
     // Safety check
     return questions.slice(0, settings.questionCount);

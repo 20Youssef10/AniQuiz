@@ -116,7 +116,7 @@ export const fetchMediaData = async (settings: QuizSettings): Promise<AnimeData[
     }
 
     const data = await response.json();
-    const media = data.data.Page.media;
+    const media = data?.data?.Page?.media;
     
     if (!media || media.length === 0) {
       throw new Error('No content found matching these settings.');
