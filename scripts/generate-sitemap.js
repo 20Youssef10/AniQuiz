@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 // Change this to your actual production domain
-const BASE_URL = 'https://aniquiz-ai.web.app';
+const BASE_URL = 'https://aniquizes.vercel.app';
 
 const routes = [
   '',
