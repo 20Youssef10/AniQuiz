@@ -89,7 +89,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, selectedAnswer, o
                 <img 
                   src={question.imageUrl} 
                   alt="Quiz Clue" 
-                  className="w-full h-full object-cover transition-all duration-1000 ease-out"
+                  className="w-full h-full object-cover object-top transition-all duration-1000 ease-out"
                   style={{ filter: `blur(${blurAmount}px)` }}
                 />
                 {!isRevealed && blurAmount > 0 && (

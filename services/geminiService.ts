@@ -36,7 +36,6 @@ export const generateQuizQuestions = async (
   customApiKey?: string
 ): Promise<QuizQuestion[]> => {
   
-  // Use custom key if provided, otherwise fall back to environment variable
   const apiKey = customApiKey || process.env.API_KEY;
   if (!apiKey) {
     throw new Error("API Key is missing. Please provide a valid Gemini API Key.");
@@ -44,7 +43,7 @@ export const generateQuizQuestions = async (
 
   const ai = new GoogleGenAI({ apiKey });
 
-  // 1. Prepare Context for Gemini with detailed character/image info
+  // 1. Prepare Context
   const animeContext = animeList.map(a => ({
     title: a.title.english || a.title.romaji,
     genres: a.genres,
@@ -63,9 +62,12 @@ export const generateQuizQuestions = async (
     ? "STRICTLY AVOID spoilers from the manga that have not been animated yet. Do not ask about character deaths or major plot twists that happen late in the series unless they are common knowledge. Focus on Season 1-2 content or general trivia."
     : "You may include questions about manga-only events if the Content Type is Manga, otherwise keep it balanced.";
 
+  // Request extra questions (buffer) to allow filtering out invalid media questions without falling short
+  const requestedCount = settings.questionCount + 3;
+
   const prompt = `
     You are an expert anime quiz master.
-    Generate exactly ${settings.questionCount} distinct quiz questions based on the provided anime/manga data.
+    Generate exactly ${requestedCount} distinct quiz questions based on the provided anime/manga data.
     
     Data Context:
     ${JSON.stringify(animeContext)}
@@ -73,7 +75,7 @@ export const generateQuizQuestions = async (
     Rules:
     1. Difficulty: ${settings.difficulty}.
     2. Language: ${settings.language}. ${langInstruction}
-    3. Generate a mix of the following Question Types:
+    3. Generate a mix of the following Question Types. Try to include at least 1-2 visual/audio questions (${QuestionType.IMAGE_GUESS} or ${QuestionType.OP_ED_GUESS}) if data permits:
        - ${QuestionType.MULTIPLE_CHOICE}
        - ${QuestionType.TRUE_FALSE}
        - ${QuestionType.CHARACTER_GUESS} (Describe a character, user guesses name)
@@ -155,21 +157,30 @@ export const generateQuizQuestions = async (
     const parsed = JSON.parse(jsonText);
     const rawQuestions = Array.isArray(parsed) ? parsed : [];
     
-    // Post-processing: Fetch YouTube Videos for OP_ED_GUESS
+    // Post-processing: Fetch YouTube Videos and Filter Invalid Media
     const processedQuestions = await Promise.all(rawQuestions.map(async (q: any) => {
-        if (q.type === QuestionType.OP_ED_GUESS && q.mediaQuery) {
+        // Handle Video Questions
+        if (q.type === QuestionType.OP_ED_GUESS) {
+            if (!q.mediaQuery) return null;
             const videoId = await searchYouTubeVideo(q.mediaQuery);
-            if (videoId) {
-                return { ...q, videoId };
-            }
-            // Fallback if video fetch fails: Change type to simple trivia if possible, or keep as is (might not have media)
-            return q; 
+            if (!videoId) return null; // Filter out if video not found (API quota or error)
+            return { ...q, videoId };
         }
+        
+        // Handle Image Questions
+        if (q.type === QuestionType.IMAGE_GUESS) {
+           if (!q.imageUrl) return null; // Filter out if no image URL
+           return q;
+        }
+
         return q;
     }));
     
-    // Safety check
-    return processedQuestions.slice(0, settings.questionCount);
+    // Remove nulls (failed media questions)
+    const validQuestions = processedQuestions.filter(q => q !== null);
+    
+    // Return requested amount
+    return validQuestions.slice(0, settings.questionCount);
 
   } catch (error: any) {
     console.error("Gemini Generation Error:", error);
