@@ -19,6 +19,7 @@ export enum GameMode {
   CLASSIC = 'Classic',
   SURVIVAL = 'Survival',
   TIME_ATTACK = 'Time Attack',
+  STORY = 'Story Mode', // New
 }
 
 export enum Language {
@@ -42,12 +43,14 @@ export enum AIPersona {
 }
 
 export interface AnimeCharacter {
+  id: number;
   name: {
     full: string;
   };
   image: {
     large: string;
   };
+  siteUrl?: string;
 }
 
 export interface AnimeData {
@@ -144,6 +147,14 @@ export interface Achievement {
   unlockedAt?: number; // Timestamp if unlocked
 }
 
+export interface GachaCard {
+  id: number;
+  name: string;
+  image: string;
+  rarity: 'Common' | 'Rare' | 'Epic' | 'Legendary';
+  obtainedAt: number;
+}
+
 export interface UserProfile {
   uid: string;
   displayName: string;
@@ -155,4 +166,14 @@ export interface UserProfile {
   gamesPlayed: number;
   achievements: string[]; // List of Achievement IDs
   matchHistory: MatchRecord[];
+  inventory: GachaCard[];
+  lastGachaDate?: number; // Timestamp
+}
+
+// Story Mode Type
+export interface StoryNode {
+  text: string;
+  options: string[];
+  backgroundPrompt?: string; // Suggestion for background
+  backgroundImage?: string; // Filled by client
 }

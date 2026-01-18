@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { QuizState, Difficulty, Language, ContentType, GameMode, AIPersona, Room, UserProfile, MatchRecord } from './types';
+import { QuizState, Difficulty, Language, ContentType, GameMode, AIPersona, Room, UserProfile, MatchRecord, QuizSettings } from './types';
 import { fetchMediaData } from './services/aniListService';
 import { generateQuizQuestions } from './services/geminiService';
 import { 
@@ -24,6 +24,10 @@ import Timer from './components/Timer';
 import LevelProgress from './components/LevelProgress';
 import AuthModal from './components/AuthModal';
 import UserProfileView from './components/UserProfile';
+import ArcadeHub from './components/ArcadeHub';
+import GachaSystem from './components/GachaSystem';
+import StoryMode from './components/StoryMode';
+import { MemoryGame, WhackGame } from './components/MiniGames';
 import { playSound } from './utils/sound';
 
 // Constants
@@ -58,7 +62,7 @@ export default function App() {
   const [searchInput, setSearchInput] = useState('');
   
   // View State Management
-  const [view, setView] = useState<'home' | 'single_setup' | 'room_setup' | 'join_room' | 'lobby' | 'game'>('home');
+  const [view, setView] = useState<'home' | 'single_setup' | 'room_setup' | 'join_room' | 'lobby' | 'game' | 'arcade' | 'story' | 'memory' | 'whack'>('home');
   
   // Room State
   const [room, setRoom] = useState<Room | null>(null);
@@ -72,6 +76,7 @@ export default function App() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showGacha, setShowGacha] = useState(false);
 
   // --- Initialize Auth & Async Challenge Loading ---
   useEffect(() => {
@@ -267,6 +272,13 @@ export default function App() {
     }
   };
 
+  // --- Arcade Handlers ---
+  const handleArcadePreset = (presetSettings: QuizSettings) => {
+    setState(prev => ({ ...prev, settings: presetSettings }));
+    // Immediately start loading for this preset
+    setTimeout(() => startGameSinglePlayer(), 100);
+  };
+
   // --- Timer ---
   useEffect(() => {
     let timer: any;
@@ -344,7 +356,6 @@ export default function App() {
         );
 
         if (newUnlocks.length > 0) {
-           // Maybe show toast notification for achievement
            console.log("Unlocked Achievements:", newUnlocks);
         }
 
@@ -354,7 +365,6 @@ export default function App() {
 
   const restartGame = () => {
     playSound('click');
-    // Clean URL
     window.history.replaceState({}, '', window.location.pathname);
     setState({ ...INITIAL_STATE, status: 'idle' });
     setRoom(null);
@@ -375,7 +385,7 @@ export default function App() {
        <div>
           <label className="block text-sm font-semibold mb-3 text-gray-300 uppercase tracking-wider">{isArabic ? 'نمط اللعب' : 'Game Mode'}</label>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {Object.values(GameMode).map(mode => (
+            {Object.values(GameMode).filter(m => m !== GameMode.STORY).map(mode => (
               <button key={mode} onClick={() => setState(prev => ({ ...prev, settings: { ...prev.settings, gameMode: mode } }))}
                 className={`py-3 px-2 rounded-xl text-sm font-bold border border-transparent transition-all ${state.settings.gameMode === mode ? 'bg-anime-primary text-white shadow-lg scale-105' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}>
                 {mode}
@@ -504,18 +514,16 @@ export default function App() {
        <div className="absolute inset-0 z-0 bg-cover bg-center transition-all duration-1000 ease-in-out opacity-20" style={{ backgroundImage: state.themeImage ? `url(${state.themeImage})` : 'none', filter: 'blur(20px) brightness(0.5)' }} />
        <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/40 via-anime-dark/80 to-anime-dark"></div>
 
-       {/* Auth Modal */}
+       {/* Modals */}
        {showAuthModal && (
           <AuthModal 
              onClose={() => setShowAuthModal(false)} 
              onLoginSuccess={(u) => { 
                 setUser(u); 
-                if (u.displayName) setPlayerName(u.displayName); // Prefill for lobby
+                if (u.displayName) setPlayerName(u.displayName); 
              }} 
           />
        )}
-
-       {/* Profile View */}
        {showProfile && userProfile && (
           <UserProfileView 
              profile={userProfile} 
@@ -526,6 +534,9 @@ export default function App() {
              }}
           />
        )}
+       {showGacha && userProfile && (
+          <GachaSystem user={userProfile} onClose={() => setShowGacha(false)} />
+       )}
 
        <div className="relative z-10">
           {/* Header */}
@@ -535,6 +546,13 @@ export default function App() {
              <div className="flex items-center gap-4">
                 {view === 'game' && <div className="text-sm font-bold bg-white/10 px-3 py-1 rounded-full">Score: {state.score}</div>}
                 
+                {/* Gacha Button */}
+                {user && userProfile && (
+                  <button onClick={() => setShowGacha(true)} className="text-2xl hover:scale-110 transition-transform" title="Daily Gacha">
+                     🎁
+                  </button>
+                )}
+
                 {/* User Avatar / Login Btn */}
                 {user && !user.isAnonymous && userProfile ? (
                    <div onClick={() => setShowProfile(true)} className="flex items-center gap-2 cursor-pointer hover:bg-white/5 p-1 rounded-lg transition-colors">
@@ -587,26 +605,33 @@ export default function App() {
                           Challenge yourself or battle friends in real-time with AI-generated quizzes.
                        </p>
 
-                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
+                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 w-full">
                           {/* Single Player */}
-                          <button onClick={() => setView('single_setup')} className="group glass-panel p-8 rounded-3xl hover:bg-white/5 transition-all duration-300 border border-white/10 hover:border-anime-primary/50 text-left relative overflow-hidden">
-                             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-6xl">👤</div>
-                             <h3 className="text-2xl font-bold mb-2 text-white group-hover:text-anime-primary transition-colors">Solo Play</h3>
-                             <p className="text-gray-400 text-sm">Challenge the AI alone and climb the ranks.</p>
+                          <button onClick={() => setView('single_setup')} className="group glass-panel p-6 rounded-3xl hover:bg-white/5 transition-all duration-300 border border-white/10 hover:border-anime-primary/50 text-left relative overflow-hidden">
+                             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-5xl">👤</div>
+                             <h3 className="text-xl font-bold mb-2 text-white group-hover:text-anime-primary transition-colors">Solo Play</h3>
+                             <p className="text-gray-400 text-xs">Challenge the AI alone.</p>
+                          </button>
+
+                          {/* Arcade Mode */}
+                          <button onClick={() => setView('arcade')} className="group glass-panel p-6 rounded-3xl hover:bg-white/5 transition-all duration-300 border border-white/10 hover:border-yellow-500/50 text-left relative overflow-hidden">
+                             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-5xl">🕹️</div>
+                             <h3 className="text-xl font-bold mb-2 text-white group-hover:text-yellow-400 transition-colors">Arcade Zone</h3>
+                             <p className="text-gray-400 text-xs">Mini-games & Gacha.</p>
                           </button>
 
                           {/* Create Room */}
-                          <button onClick={() => setView('room_setup')} className="group glass-panel p-8 rounded-3xl hover:bg-white/5 transition-all duration-300 border border-white/10 hover:border-green-500/50 text-left relative overflow-hidden">
-                             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-6xl">⚔️</div>
-                             <h3 className="text-2xl font-bold mb-2 text-white group-hover:text-green-400 transition-colors">Create Room</h3>
-                             <p className="text-gray-400 text-sm">Host a lobby, set the rules, and invite friends.</p>
+                          <button onClick={() => setView('room_setup')} className="group glass-panel p-6 rounded-3xl hover:bg-white/5 transition-all duration-300 border border-white/10 hover:border-green-500/50 text-left relative overflow-hidden">
+                             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-5xl">⚔️</div>
+                             <h3 className="text-xl font-bold mb-2 text-white group-hover:text-green-400 transition-colors">Create Room</h3>
+                             <p className="text-gray-400 text-xs">Host a lobby.</p>
                           </button>
 
                           {/* Join Room */}
-                          <button onClick={() => setView('join_room')} className="group glass-panel p-8 rounded-3xl hover:bg-white/5 transition-all duration-300 border border-white/10 hover:border-anime-accent/50 text-left relative overflow-hidden">
-                             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-6xl">🚪</div>
-                             <h3 className="text-2xl font-bold mb-2 text-white group-hover:text-anime-accent transition-colors">Join Room</h3>
-                             <p className="text-gray-400 text-sm">Enter a code to join an existing party.</p>
+                          <button onClick={() => setView('join_room')} className="group glass-panel p-6 rounded-3xl hover:bg-white/5 transition-all duration-300 border border-white/10 hover:border-anime-accent/50 text-left relative overflow-hidden">
+                             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity text-5xl">🚪</div>
+                             <h3 className="text-xl font-bold mb-2 text-white group-hover:text-anime-accent transition-colors">Join Room</h3>
+                             <p className="text-gray-400 text-xs">Enter a party code.</p>
                           </button>
                        </div>
                     </div>
@@ -615,8 +640,22 @@ export default function App() {
                  {/* 2. Setup Views */}
                  {view === 'single_setup' && <div className="max-w-2xl mx-auto">{renderSettings(false)}</div>}
                  {view === 'room_setup' && <div className="max-w-2xl mx-auto">{renderSettings(true)}</div>}
+                 
+                 {/* 3. Arcade Hub */}
+                 {view === 'arcade' && (
+                    <ArcadeHub 
+                      onBack={() => setView('home')}
+                      onSelectPreset={handleArcadePreset}
+                      onSelectMiniGame={(game) => setView(game)}
+                    />
+                 )}
+                 
+                 {/* 4. Mini Games & Story */}
+                 {view === 'story' && <StoryMode onClose={() => setView('arcade')} />}
+                 {view === 'memory' && <MemoryGame onExit={() => setView('arcade')} />}
+                 {view === 'whack' && <WhackGame onExit={() => setView('arcade')} />}
 
-                 {/* 3. Join Room View */}
+                 {/* 5. Join Room View */}
                  {view === 'join_room' && (
                     <div className="max-w-md mx-auto glass-panel p-8 rounded-3xl animate-fade-in">
                        <h2 className="text-2xl font-bold mb-6 text-center">Join Party</h2>
@@ -635,7 +674,7 @@ export default function App() {
                     </div>
                  )}
 
-                 {/* 4. Lobby View */}
+                 {/* 6. Lobby View */}
                  {view === 'lobby' && room && (
                     <div className="max-w-2xl mx-auto glass-panel p-8 rounded-3xl animate-fade-in text-center">
                        <div className="mb-6">
@@ -687,7 +726,7 @@ export default function App() {
                     </div>
                  )}
 
-                 {/* 5. Game View */}
+                 {/* 7. Game View */}
                  {view === 'game' && state.questions && state.questions.length > 0 && (
                    <div className="space-y-6">
                       {state.settings.gameMode === GameMode.TIME_ATTACK && <Timer timeLeft={state.timeLeft || 0} maxTime={QUESTION_TIMER_SECONDS} />}

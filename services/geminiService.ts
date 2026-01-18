@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import { AnimeData, QuizQuestion, QuizSettings, QuestionType, Language, AIPersona } from '../types';
+import { AnimeData, QuizQuestion, QuizSettings, QuestionType, Language, AIPersona, StoryNode } from '../types';
 import { cleanDescription } from './aniListService';
 import { searchYouTubeVideo } from './youtubeService';
 
@@ -195,4 +195,56 @@ export const generateQuizQuestions = async (
     const message = error.message || "Unknown API Error";
     throw new Error(`AI Gen Error: ${message}.`);
   }
+};
+
+// --- Story Mode ---
+
+export const generateStoryNode = async (
+  genre: string,
+  previousText: string = "",
+  previousChoice: string = "",
+  lang: Language = Language.ENGLISH
+): Promise<StoryNode> => {
+    
+    const apiKey = process.env.API_KEY;
+    if (!apiKey) throw new Error("API Key missing");
+    const ai = new GoogleGenAI({ apiKey });
+
+    const isArabic = lang === Language.ARABIC;
+    
+    const systemInstruction = isArabic 
+      ? `أنت راوي قصص تفاعلية (RPG Master) في عالم الأنمي. تصنيفك هو: ${genre}. اكتب فقرة قصيرة (50 كلمة) تصف الموقف الحالي، ثم قدم 3 خيارات للاعب.`
+      : `You are an Interactive Fiction (RPG) Master set in an Anime world. Genre: ${genre}. Write a short paragraph (50 words) describing the current situation, then provide 3 options for the player.`;
+
+    const prompt = `
+      Previous Context: ${previousText}
+      Player Chose: ${previousChoice}
+      
+      If this is the start, introduce the player as the protagonist (Isekai or Shonen style).
+      If the player chose something, continue the story based on that choice.
+      
+      Generate a JSON response.
+      'backgroundPrompt' should be a descriptive prompt to generate or find an image for the scene (e.g., "Cyberpunk city street at night, neon lights, anime style").
+    `;
+
+    const response = await ai.models.generateContent({
+      model: MODEL_NAME,
+      contents: prompt,
+      config: {
+        systemInstruction,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+             text: { type: Type.STRING },
+             options: { type: Type.ARRAY, items: { type: Type.STRING } },
+             backgroundPrompt: { type: Type.STRING }
+          },
+          required: ["text", "options"]
+        }
+      }
+    });
+    
+    const data = JSON.parse(response.text || '{}');
+    return data as StoryNode;
 };

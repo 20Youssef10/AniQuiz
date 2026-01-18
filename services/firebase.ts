@@ -24,7 +24,7 @@ import {
   where, 
   getDocs 
 } from 'firebase/firestore';
-import { QuizQuestion, QuizSettings, Room, Player, UserProfile, MatchRecord } from '../types';
+import { QuizQuestion, QuizSettings, Room, Player, UserProfile, MatchRecord, GachaCard } from '../types';
 import { getUserStats } from './levelService'; // Fallback for level calc logic
 
 const firebaseConfig = {
@@ -97,7 +97,9 @@ const createUserDocument = async (user: User) => {
       title: initialStats.title,
       gamesPlayed: 0,
       achievements: [],
-      matchHistory: []
+      matchHistory: [],
+      inventory: [],
+      lastGachaDate: 0
     };
 
     try {
@@ -130,27 +132,28 @@ export const subscribeToUserProfile = (uid: string, callback: (profile: UserProf
 export const saveGameResultToProfile = async (uid: string, record: MatchRecord, newAchievements: string[]) => {
   const userRef = doc(db, "users", uid);
   
-  // Need to calculate new level based on TOTAL XP. 
-  // Ideally, we run a transaction, but for simplicity:
   const snap = await getDoc(userRef);
   if (!snap.exists()) return;
   
   const currentData = snap.data() as UserProfile;
   const newXp = (currentData.xp || 0) + record.xpEarned;
   
-  // Simple Level Logic (Same as levelService but centralized here for cloud)
-  // Level = sqrt(xp) roughly
   const newLevel = Math.floor(Math.sqrt(newXp));
 
-  // Determine Title based on XP (Should match levelService)
-  // We can just update XP and let client derive title, or store it.
-  
   await updateDoc(userRef, {
     xp: newXp,
     level: newLevel,
     gamesPlayed: (currentData.gamesPlayed || 0) + 1,
     matchHistory: arrayUnion(record),
     ...(newAchievements.length > 0 && { achievements: arrayUnion(...newAchievements) })
+  });
+};
+
+export const saveGachaItem = async (uid: string, item: GachaCard) => {
+  const userRef = doc(db, "users", uid);
+  await updateDoc(userRef, {
+    inventory: arrayUnion(item),
+    lastGachaDate: Date.now()
   });
 };
 
