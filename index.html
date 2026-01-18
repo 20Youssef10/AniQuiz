@@ -3,7 +3,46 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AniQuiz AI</title>
+    
+    <!-- Primary Meta Tags -->
+    <title>AniQuiz AI - The Ultimate Anime Trivia Challenge</title>
+    <meta name="title" content="AniQuiz AI - The Ultimate Anime Trivia Challenge" />
+    <meta name="description" content="Test your anime knowledge with infinite AI-generated quizzes. Challenge friends, play story mode, and unlock achievements in this modern anime trivia game powered by Gemini AI." />
+    <meta name="keywords" content="anime quiz, trivia, ai, gemini, multiplayer, otaku, manga, naruto, one piece, game" />
+    <meta name="author" content="AniQuiz AI Team" />
+    <meta name="theme-color" content="#6366f1" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://aniquiz-ai.web.app/" />
+    <meta property="og:title" content="AniQuiz AI - Infinite Anime Trivia" />
+    <meta property="og:description" content="Battle friends or play solo in the most advanced AI-powered anime quiz game. Ranked modes, mini-games, and more!" />
+    <meta property="og:image" content="https://aniquiz-ai.web.app/og-image.jpg" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://aniquiz-ai.web.app/" />
+    <meta property="twitter:title" content="AniQuiz AI - Infinite Anime Trivia" />
+    <meta property="twitter:description" content="Battle friends or play solo in the most advanced AI-powered anime quiz game." />
+    <meta property="twitter:image" content="https://aniquiz-ai.web.app/og-image.jpg" />
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      "name": "AniQuiz AI",
+      "applicationCategory": "GameApplication",
+      "operatingSystem": "Web",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "description": "An AI-powered anime quiz application featuring multiplayer modes, RPG story elements, and dynamic question generation."
+    }
+    </script>
+
     <!-- Tailwind CSS CDN is kept for simplicity, though installation via package.json is also an option -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
@@ -104,7 +143,9 @@
     "@google/genai": "https://esm.sh/@google/genai@^1.37.0",
     "vite": "https://esm.sh/vite@^7.3.1",
     "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
-    "firebase/": "https://esm.sh/firebase@^12.8.0/"
+    "firebase/": "https://esm.sh/firebase@^12.8.0/",
+    "path": "https://esm.sh/path@^0.12.7",
+    "fs": "https://esm.sh/fs@^0.0.1-security"
   }
 }
 </script>

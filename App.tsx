@@ -82,6 +82,24 @@ export default function App() {
   const [showProfile, setShowProfile] = useState(false);
   const [showGacha, setShowGacha] = useState(false);
 
+  // --- Dynamic SEO: Title Updates ---
+  useEffect(() => {
+    let title = "AniQuiz AI";
+    switch (view) {
+      case 'home': title = "AniQuiz AI - Home"; break;
+      case 'arcade': title = "AniQuiz AI - Arcade Zone"; break;
+      case 'game': title = `AniQuiz AI - Playing ${state.settings.gameMode}`; break;
+      case 'story': title = "AniQuiz AI - Story Mode"; break;
+      case 'room_setup': 
+      case 'lobby': title = "AniQuiz AI - Multiplayer"; break;
+      case 'memory': title = "AniQuiz AI - Memory Match"; break;
+      case 'silhouette': title = "AniQuiz AI - Silhouette Challenge"; break;
+      case 'whack': title = "AniQuiz AI - Whack-a-Slime"; break;
+      default: title = "AniQuiz AI";
+    }
+    document.title = title;
+  }, [view, state.settings.gameMode]);
+
   // --- Initialize Auth & Async Challenge Loading ---
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
