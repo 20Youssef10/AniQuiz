@@ -1,4 +1,5 @@
 import { initializeApp } from 'firebase/app';
+import { getAuth, signInAnonymously } from 'firebase/auth';
 import { getFirestore, collection, addDoc, getDoc, doc, onSnapshot, updateDoc, arrayUnion, query, where, getDocs } from 'firebase/firestore';
 import { QuizQuestion, QuizSettings, Room, Player } from '../types';
 
@@ -12,7 +13,15 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 const db = getFirestore(app);
+
+// Helper to authenticate anonymously
+const ensureAuth = async () => {
+  if (!auth.currentUser) {
+    await signInAnonymously(auth);
+  }
+};
 
 // --- Challenge Links (Existing) ---
 
@@ -23,6 +32,7 @@ export interface ChallengeData {
 }
 
 export const createChallenge = async (questions: QuizQuestion[], settings: QuizSettings): Promise<string> => {
+  await ensureAuth();
   try {
     const docRef = await addDoc(collection(db, "challenges"), {
       questions,
@@ -37,6 +47,7 @@ export const createChallenge = async (questions: QuizQuestion[], settings: QuizS
 };
 
 export const getChallenge = async (challengeId: string): Promise<ChallengeData | null> => {
+  await ensureAuth();
   try {
     const docRef = doc(db, "challenges", challengeId);
     const docSnap = await getDoc(docRef);
@@ -59,6 +70,7 @@ const generateRoomCode = () => {
 };
 
 export const createRoom = async (playerName: string, settings: QuizSettings): Promise<{ roomId: string, playerId: string, code: string }> => {
+  await ensureAuth();
   try {
     const playerId = `host_${Date.now()}`;
     const code = generateRoomCode();
@@ -88,6 +100,7 @@ export const createRoom = async (playerName: string, settings: QuizSettings): Pr
 };
 
 export const joinRoom = async (code: string, playerName: string): Promise<{ roomId: string, playerId: string }> => {
+  await ensureAuth();
   try {
     const q = query(collection(db, "rooms"), where("code", "==", code.toUpperCase()), where("status", "==", "waiting"));
     const querySnapshot = await getDocs(q);
@@ -127,6 +140,7 @@ export const listenToRoom = (roomId: string, callback: (room: Room) => void) => 
 };
 
 export const startRoomGame = async (roomId: string, questions: QuizQuestion[]) => {
+  await ensureAuth();
   try {
     await updateDoc(doc(db, "rooms", roomId), {
       status: 'playing',
@@ -141,6 +155,7 @@ export const startRoomGame = async (roomId: string, questions: QuizQuestion[]) =
 export const updatePlayerScore = async (roomId: string, players: Player[]) => {
     // In a real app we might update just the specific player field using complex logic, 
     // but replacing the array is simpler for this scope given concurrency isn't high.
+    await ensureAuth();
     await updateDoc(doc(db, "rooms", roomId), {
         players: players
     });
