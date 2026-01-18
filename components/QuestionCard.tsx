@@ -101,6 +101,15 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, selectedAnswer, o
             </div>
           )}
 
+          {/* Emoji Guess Visual */}
+          {question.type === QuestionType.EMOJI_GUESS && question.emojiClue && (
+             <div className="flex justify-center items-center py-6 bg-white/5 rounded-xl border border-white/10">
+                <div className="text-6xl md:text-8xl tracking-widest animate-pulse filter drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
+                   {question.emojiClue}
+                </div>
+             </div>
+          )}
+
           {/* OP/ED Video Player */}
           {question.type === QuestionType.OP_ED_GUESS && question.videoId && (
              <div className="flex justify-center flex-col items-center">

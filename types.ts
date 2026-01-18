@@ -12,6 +12,7 @@ export enum QuestionType {
   IMAGE_GUESS = 'image_guess', // Visual
   QUOTE_GUESS = 'quote_guess',
   OP_ED_GUESS = 'op_ed_guess',
+  EMOJI_GUESS = 'emoji_guess', // New Type
 }
 
 export enum GameMode {
@@ -79,6 +80,7 @@ export interface QuizQuestion {
   imageUrl?: string; // Optional image for the question
   mediaQuery?: string; // Search query for YouTube
   videoId?: string; // YouTube Video ID
+  emojiClue?: string; // String containing emojis
 }
 
 export interface QuizSettings {
@@ -122,4 +124,35 @@ export interface Room {
   players: Player[];
   questions?: QuizQuestion[];
   createdAt: number;
+}
+
+// User Profile & Achievements
+export interface MatchRecord {
+  date: number;
+  score: number;
+  totalQuestions: number;
+  mode: GameMode;
+  difficulty: Difficulty;
+  xpEarned: number;
+}
+
+export interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  unlockedAt?: number; // Timestamp if unlocked
+}
+
+export interface UserProfile {
+  uid: string;
+  displayName: string;
+  email: string;
+  photoURL?: string;
+  xp: number;
+  level: number;
+  title: string;
+  gamesPlayed: number;
+  achievements: string[]; // List of Achievement IDs
+  matchHistory: MatchRecord[];
 }

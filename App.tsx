@@ -1,14 +1,30 @@
 import { useState, useEffect } from 'react';
-import { QuizState, Difficulty, Language, ContentType, GameMode, AIPersona, Room } from './types';
+import { QuizState, Difficulty, Language, ContentType, GameMode, AIPersona, Room, UserProfile, MatchRecord } from './types';
 import { fetchMediaData } from './services/aniListService';
 import { generateQuizQuestions } from './services/geminiService';
-import { getChallenge, createRoom, joinRoom, listenToRoom, startRoomGame } from './services/firebase';
+import { 
+  getChallenge, 
+  createRoom, 
+  joinRoom, 
+  listenToRoom, 
+  startRoomGame, 
+  auth, 
+  getUserProfile, 
+  subscribeToUserProfile, 
+  logout, 
+  saveGameResultToProfile 
+} from './services/firebase';
+import { checkNewAchievements } from './services/levelService';
+import { onAuthStateChanged } from 'firebase/auth';
+
 import QuestionCard from './components/QuestionCard';
 import Button from './components/Button';
 import LoadingSpinner from './components/LoadingSpinner';
 import ScoreBoard from './components/ScoreBoard';
 import Timer from './components/Timer';
 import LevelProgress from './components/LevelProgress';
+import AuthModal from './components/AuthModal';
+import UserProfileView from './components/UserProfile';
 import { playSound } from './utils/sound';
 
 // Constants
@@ -52,7 +68,13 @@ export default function App() {
   const [hostApiKey, setHostApiKey] = useState(process.env.API_KEY || '');
   const [roomCodeInput, setRoomCodeInput] = useState('');
 
-  // --- Initialize & Async Challenge Loading ---
+  // Auth & Profile State
+  const [user, setUser] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+
+  // --- Initialize Auth & Async Challenge Loading ---
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const challengeId = params.get('c');
@@ -60,6 +82,22 @@ export default function App() {
     if (challengeId) {
       loadChallenge(challengeId);
     }
+
+    // Listen to Firebase Auth
+    const unsubscribeAuth = onAuthStateChanged(auth, async (currentUser) => {
+       setUser(currentUser);
+       if (currentUser && !currentUser.isAnonymous) {
+          // Real user: Subscribe to profile updates
+          const unsubProfile = subscribeToUserProfile(currentUser.uid, (profile) => {
+             setUserProfile(profile);
+          });
+          return () => unsubProfile();
+       } else {
+         setUserProfile(null);
+       }
+    });
+
+    return () => unsubscribeAuth();
   }, []);
 
   // --- Room Listener ---
@@ -296,6 +334,25 @@ export default function App() {
     }
   };
 
+  const handleSaveStats = async (record: MatchRecord) => {
+     if (user && !user.isAnonymous && userProfile) {
+        // Calculate Achievements
+        const newUnlocks = checkNewAchievements(
+          userProfile, 
+          record.score, 
+          record.totalQuestions, 
+          record.mode
+        );
+
+        if (newUnlocks.length > 0) {
+           // Maybe show toast notification for achievement
+           console.log("Unlocked Achievements:", newUnlocks);
+        }
+
+        await saveGameResultToProfile(user.uid, record, newUnlocks);
+     }
+  };
+
   const restartGame = () => {
     playSound('click');
     // Clean URL
@@ -448,11 +505,60 @@ export default function App() {
        <div className="absolute inset-0 z-0 bg-cover bg-center transition-all duration-1000 ease-in-out opacity-20" style={{ backgroundImage: state.themeImage ? `url(${state.themeImage})` : 'none', filter: 'blur(20px) brightness(0.5)' }} />
        <div className="absolute inset-0 z-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-900/40 via-anime-dark/80 to-anime-dark"></div>
 
+       {/* Auth Modal */}
+       {showAuthModal && (
+          <AuthModal 
+             onClose={() => setShowAuthModal(false)} 
+             onLoginSuccess={(u) => { 
+                setUser(u); 
+                if (u.displayName) setPlayerName(u.displayName); // Prefill for lobby
+             }} 
+          />
+       )}
+
+       {/* Profile View */}
+       {showProfile && userProfile && (
+          <UserProfileView 
+             profile={userProfile} 
+             onClose={() => setShowProfile(false)} 
+             onLogout={async () => {
+                await logout();
+                setShowProfile(false);
+             }}
+          />
+       )}
+
        <div className="relative z-10">
           {/* Header */}
           <header className="p-6 flex justify-between items-center border-b border-white/5 bg-anime-dark/50 backdrop-blur-md sticky top-0 z-50">
              <h1 className="text-2xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-anime-primary to-anime-accent cursor-pointer" onClick={() => restartGame()}>AniQuiz AI</h1>
-             {view === 'game' && <div className="text-sm font-bold bg-white/10 px-3 py-1 rounded-full">Score: {state.score}</div>}
+             
+             <div className="flex items-center gap-4">
+                {view === 'game' && <div className="text-sm font-bold bg-white/10 px-3 py-1 rounded-full">Score: {state.score}</div>}
+                
+                {/* User Avatar / Login Btn */}
+                {user && !user.isAnonymous && userProfile ? (
+                   <div onClick={() => setShowProfile(true)} className="flex items-center gap-2 cursor-pointer hover:bg-white/5 p-1 rounded-lg transition-colors">
+                      <div className="text-right hidden md:block">
+                         <div className="text-xs font-bold text-white">{userProfile.displayName}</div>
+                         <div className="text-[10px] text-anime-primary">LVL {userProfile.level}</div>
+                      </div>
+                      <div className="w-8 h-8 rounded-full overflow-hidden border border-anime-primary">
+                         {userProfile.photoURL ? (
+                           <img src={userProfile.photoURL} alt="User" className="w-full h-full object-cover" />
+                         ) : (
+                           <div className="w-full h-full bg-anime-secondary flex items-center justify-center text-xs font-bold">
+                             {userProfile.displayName.charAt(0)}
+                           </div>
+                         )}
+                      </div>
+                   </div>
+                ) : (
+                   <Button variant="ghost" className="!px-4 !py-2 text-xs md:text-sm" onClick={() => setShowAuthModal(true)}>
+                      Login
+                   </Button>
+                )}
+             </div>
           </header>
 
           <main className="container mx-auto px-4 py-8 md:py-12">
@@ -600,7 +706,13 @@ export default function App() {
                         </div>
                       )}
                       
-                      {state.status === 'completed' && <ScoreBoard state={state} onRestart={restartGame} />}
+                      {state.status === 'completed' && (
+                         <ScoreBoard 
+                            state={state} 
+                            onRestart={restartGame} 
+                            onSaveStats={handleSaveStats}
+                         />
+                      )}
                    </div>
                  )}
                </>

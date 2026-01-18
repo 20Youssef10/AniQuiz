@@ -1,3 +1,5 @@
+import { Achievement, UserProfile } from "../types";
+
 export interface UserStats {
   xp: number;
   level: number;
@@ -19,13 +21,26 @@ const RANKS = [
   { xp: 100000, title: "Anime God", titleAr: "حاكم الأنمي" },
 ];
 
+export const ACHIEVEMENTS: Achievement[] = [
+  { id: 'first_blood', title: 'First Blood', description: 'Play your first game.', icon: '⚔️' },
+  { id: 'sharpshooter', title: 'Sharpshooter', description: 'Get 100% correct in a game.', icon: '🎯' },
+  { id: 'survivor', title: 'Survivor', description: 'Score 10+ in Survival Mode.', icon: '🛡️' },
+  { id: 'speedster', title: 'Speedster', description: 'Score 10+ in Time Attack Mode.', icon: '⚡' },
+  { id: 'otaku', title: 'True Otaku', description: 'Reach Level 10.', icon: '👓' },
+  { id: 'veteran', title: 'Veteran', description: 'Play 50 games.', icon: '🎖️' },
+];
+
 const XP_STORAGE_KEY = 'aniquiz_user_xp';
 
+// Used for Guest/Local storage fallback
 export const getUserStats = (lang: 'English' | 'Arabic' = 'English'): UserStats => {
   const storedXp = localStorage.getItem(XP_STORAGE_KEY);
   const xp = storedXp ? parseInt(storedXp, 10) : 0;
 
-  // Find Rank
+  return calculateStatsFromXp(xp, lang);
+};
+
+export const calculateStatsFromXp = (xp: number, lang: 'English' | 'Arabic' = 'English'): UserStats => {
   let currentRank = RANKS[0];
   let nextRank = RANKS[1];
 
@@ -37,9 +52,7 @@ export const getUserStats = (lang: 'English' | 'Arabic' = 'English'): UserStats 
   }
 
   const title = lang === 'Arabic' ? currentRank.titleAr : currentRank.title;
-  
-  // Simple level formula derived from total XP (e.g., sqrt curve or just brackets)
-  // Let's just use a calculated level based on 100xp increments roughly
+  // Level = sqrt(xp) approximation
   const level = Math.floor(Math.sqrt(xp));
 
   return {
@@ -55,4 +68,49 @@ export const addXp = (amount: number): UserStats => {
   const newXp = currentStats.xp + amount;
   localStorage.setItem(XP_STORAGE_KEY, newXp.toString());
   return getUserStats();
+};
+
+export const checkNewAchievements = (
+  profile: UserProfile | null, 
+  currentScore: number, 
+  totalQuestions: number,
+  mode: string
+): string[] => {
+  if (!profile) return [];
+  
+  const unlockedIds = new Set(profile.achievements);
+  const newUnlocks: string[] = [];
+
+  // Check: First Blood
+  if (!unlockedIds.has('first_blood')) {
+    newUnlocks.push('first_blood');
+  }
+
+  // Check: Sharpshooter
+  if (!unlockedIds.has('sharpshooter') && currentScore === totalQuestions && totalQuestions >= 5) {
+    newUnlocks.push('sharpshooter');
+  }
+
+  // Check: Survivor
+  if (!unlockedIds.has('survivor') && mode === 'Survival' && currentScore >= 10) {
+    newUnlocks.push('survivor');
+  }
+
+  // Check: Speedster
+  if (!unlockedIds.has('speedster') && mode === 'Time Attack' && currentScore >= 10) {
+    newUnlocks.push('speedster');
+  }
+
+  // Check: Otaku (Level 10 approx 100xp) - Let's say level 10 = 100 XP for simplicity in math above, 
+  // actually sqrt(100) = 10. So XP needed is 100.
+  if (!unlockedIds.has('otaku') && profile.level >= 10) {
+    newUnlocks.push('otaku');
+  }
+
+  // Check: Veteran
+  if (!unlockedIds.has('veteran') && profile.gamesPlayed >= 49) { // 49 + this one
+    newUnlocks.push('veteran');
+  }
+
+  return newUnlocks;
 };

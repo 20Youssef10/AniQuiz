@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { QuizState, Language } from '../types';
+import { QuizState, Language, MatchRecord } from '../types';
 import Button from './Button';
 import { createChallenge } from '../services/firebase';
 import { addXp, getUserStats } from '../services/levelService';
@@ -7,19 +7,21 @@ import { addXp, getUserStats } from '../services/levelService';
 interface ScoreBoardProps {
   state: QuizState;
   onRestart: () => void;
+  onSaveStats?: (record: MatchRecord) => void; // Callback to parent
 }
 
-const ScoreBoard: React.FC<ScoreBoardProps> = ({ state, onRestart }) => {
+const ScoreBoard: React.FC<ScoreBoardProps> = ({ state, onRestart, onSaveStats }) => {
   const [challengeLink, setChallengeLink] = useState<string | null>(null);
   const [isGeneratingLink, setIsGeneratingLink] = useState(false);
   const [earnedXp, setEarnedXp] = useState(0);
-  const [stats, setStats] = useState(getUserStats(state.settings.language));
+  
+  // Legacy local stats for display if not logged in
+  const [localStats, setLocalStats] = useState(getUserStats(state.settings.language));
 
   const isArabic = state.settings.language === Language.ARABIC;
 
-  // Calculate and Award XP once on mount
   useEffect(() => {
-    // XP Formula: Correct Answers * 10 * Difficulty Multiplier
+    // XP Formula
     const correctCount = state.score;
     let multiplier = 1;
     if (state.settings.difficulty === 'Medium') multiplier = 1.5;
@@ -28,14 +30,27 @@ const ScoreBoard: React.FC<ScoreBoardProps> = ({ state, onRestart }) => {
     if (state.settings.gameMode === 'Time Attack') multiplier *= 1.2;
 
     const xp = Math.round(correctCount * 10 * multiplier);
-    
+    setEarnedXp(xp);
+
+    // Save Logic
     if (xp > 0) {
-      setEarnedXp(xp);
-      addXp(xp);
-      // Update local stats display after adding
-      setStats(getUserStats(state.settings.language));
+       // 1. Local Fallback (Always run for immediate feedback/guest)
+       addXp(xp);
+       setLocalStats(getUserStats(state.settings.language));
+
+       // 2. Cloud Save (via Parent)
+       if (onSaveStats) {
+         onSaveStats({
+            date: Date.now(),
+            score: state.score,
+            totalQuestions: state.questions.length,
+            mode: state.settings.gameMode,
+            difficulty: state.settings.difficulty,
+            xpEarned: xp
+         });
+       }
     }
-  }, []); // Run once
+  }, []);
 
   const handleCreateChallenge = async () => {
     setIsGeneratingLink(true);
@@ -68,9 +83,9 @@ const ScoreBoard: React.FC<ScoreBoardProps> = ({ state, onRestart }) => {
     <div className="flex flex-col items-center justify-center text-center p-4 animate-fade-in">
       <div className="glass-panel p-8 md:p-12 rounded-3xl shadow-2xl max-w-lg w-full relative overflow-hidden">
         
-        {/* Rank Badge at top right */}
+        {/* Rank Badge at top right (Visual only) */}
         <div className="absolute top-4 right-4 bg-yellow-500/20 text-yellow-500 border border-yellow-500/50 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-           {stats.title}
+           {localStats.title}
         </div>
 
         <h2 className="text-3xl font-bold text-white mb-2">{message}</h2>

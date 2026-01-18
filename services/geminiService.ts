@@ -75,13 +75,14 @@ export const generateQuizQuestions = async (
     Rules:
     1. Difficulty: ${settings.difficulty}.
     2. Language: ${settings.language}. ${langInstruction}
-    3. Generate a mix of the following Question Types. Try to include at least 1-2 visual/audio questions (${QuestionType.IMAGE_GUESS} or ${QuestionType.OP_ED_GUESS}) if data permits:
+    3. Generate a mix of the following Question Types. Try to include at least 1-2 visual/audio questions (${QuestionType.IMAGE_GUESS} or ${QuestionType.OP_ED_GUESS}) if data permits. ALSO include at least 1 ${QuestionType.EMOJI_GUESS}:
        - ${QuestionType.MULTIPLE_CHOICE}
        - ${QuestionType.TRUE_FALSE}
        - ${QuestionType.CHARACTER_GUESS} (Describe a character, user guesses name)
        - ${QuestionType.IMAGE_GUESS} (Show an image, user guesses character or anime)
        - ${QuestionType.QUOTE_GUESS} (Who said this quote?)
        - ${QuestionType.OP_ED_GUESS} (Trivia about Openings/Endings)
+       - ${QuestionType.EMOJI_GUESS} (Represent an anime or character using ONLY emojis)
     
     4. **Image Guess Rules**: 
        - If you choose ${QuestionType.IMAGE_GUESS}, you MUST pick a valid URL from the provided 'characters' or 'bannerImage' data in the context.
@@ -98,15 +99,20 @@ export const generateQuizQuestions = async (
        - If you choose ${QuestionType.OP_ED_GUESS}, you MUST provide a 'mediaQuery' field string.
        - The 'mediaQuery' should be a YouTube search string like "Attack on Titan Opening 1" or "Unravel Tokyo Ghoul Opening".
        - The question text can be: "Which anime features this opening song?", "Who is the artist of this ending?", or "What specific object appears at the end of this sequence?".
+       
+    7. **Emoji Guess Rules**:
+       - If you choose ${QuestionType.EMOJI_GUESS}, you MUST provide a string of 3 to 6 emojis in the 'emojiClue' field.
+       - The emojis must abstractly represent the plot, power system, or main character of the anime (e.g., 🏴‍☠️👒🍖 for One Piece).
+       - The question text should be "Guess the anime from these emojis".
     
-    7. **AI Persona & Explanation**:
+    8. **AI Persona & Explanation**:
        - ${personaInstruction}
        - The 'explanation' field MUST be written in this persona's voice.
     
-    8. **Spoiler Guard**:
+    9. **Spoiler Guard**:
        - ${spoilerInstruction}
     
-    9. **General Rules**:
+    10. **General Rules**:
        - Ensure questions are factually accurate.
        - Do NOT reproduce large chunks of copyrighted text.
        - The output MUST be a valid JSON array.
@@ -133,7 +139,8 @@ export const generateQuizQuestions = async (
                 QuestionType.CHARACTER_GUESS,
                 QuestionType.IMAGE_GUESS,
                 QuestionType.QUOTE_GUESS,
-                QuestionType.OP_ED_GUESS
+                QuestionType.OP_ED_GUESS,
+                QuestionType.EMOJI_GUESS
               ]},
               options: { 
                 type: Type.ARRAY,
@@ -143,7 +150,8 @@ export const generateQuizQuestions = async (
               explanation: { type: Type.STRING },
               relatedAnimeTitle: { type: Type.STRING },
               imageUrl: { type: Type.STRING },
-              mediaQuery: { type: Type.STRING }
+              mediaQuery: { type: Type.STRING },
+              emojiClue: { type: Type.STRING }
             },
             required: ["id", "text", "type", "options", "correctAnswer", "explanation"]
           }
