@@ -56,7 +56,8 @@ export const createChallenge = async (questions: QuizQuestion[], settings: QuizS
       settings: cleanSettings,
       creatorId: user.uid,
       userId: user.uid,
-      uid: user.uid, // Adding 'uid' explicitly as some rules might check for it
+      uid: user.uid, 
+      ownerId: user.uid, // Required for generic "owner-only" security rules
       createdAt: Date.now()
     };
 
@@ -113,8 +114,8 @@ export const createRoom = async (playerName: string, settings: QuizSettings): Pr
       settings: cleanSettings,
       players: [hostPlayer],
       createdAt: Date.now(),
-      ownerId: user.uid,
-      uid: user.uid 
+      ownerId: user.uid, // Security Rule Key
+      uid: user.uid      // Fallback Security Rule Key
     };
 
     const docRef = await addDoc(collection(db, "rooms"), roomData);

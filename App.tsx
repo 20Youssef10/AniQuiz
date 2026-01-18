@@ -315,7 +315,6 @@ export default function App() {
 
   const renderSettings = (isRoomSetup = false) => (
     <div className="glass-panel p-6 md:p-8 rounded-2xl space-y-8 shadow-2xl ring-1 ring-white/10 animate-fade-in">
-       {/* (Settings UI Code from previous implementation - reused) */}
        {/* Game Mode */}
        <div>
           <label className="block text-sm font-semibold mb-3 text-gray-300 uppercase tracking-wider">{isArabic ? 'نمط اللعب' : 'Game Mode'}</label>
@@ -353,6 +352,19 @@ export default function App() {
               ))}
             </div>
          </div>
+       </div>
+
+       {/* Question Count */}
+       <div>
+          <label className="block text-sm font-semibold mb-3 text-gray-300 uppercase tracking-wider">{isArabic ? 'عدد الأسئلة' : 'Number of Questions'}</label>
+          <div className="grid grid-cols-4 gap-2">
+            {[5, 10, 15, 20].map(num => (
+              <button key={num} onClick={() => setState(p => ({...p, settings: {...p.settings, questionCount: num}}))}
+                 className={`py-2 rounded-lg text-sm font-medium ${state.settings.questionCount === num ? 'bg-anime-secondary text-white' : 'bg-white/5 text-gray-400'}`}>
+                 {num}
+              </button>
+            ))}
+          </div>
        </div>
 
        {/* Content Type */}
