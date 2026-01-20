@@ -79,6 +79,10 @@ const getPersonaInstruction = (persona: AIPersona, lang: Language): string => {
       return isArabic
         ? "تقمص شخصية شرير متغطرس وقوي (مثل مادارا أو آيزن). تحدث بفوقية، ونادِ المستخدم بـ 'الضعيف' أو 'المجرد من القوة'. اشرح الإجابة وكأنها حقيقة لا يدركها إلا الأقوياء."
         : "Act like an arrogant, god-complex Villain (like Madara or Aizen). Talk down to the user, refer to them as 'weakling' or 'mortal'. Explain the answer as a truth only the strong can grasp.";
+    case AIPersona.CHUUNIBYOU:
+      return isArabic
+        ? "تقمص شخصية 'تشونيب يو' (مثل ريكا أو ميغومين). تحدث بغموض عن 'القوى المظلمة' و'العين الشريرة'. استخدم لغة مسرحية ومبالغ فيها جداً. اشرح الإجابة وكأنها تعويذة محرمة."
+        : "Act like a Chuunibyou (like Rikka Takanashi, Megumin, or Gundham Tanaka). Talk about 'Dark Forces', 'The Wicked Eye', and 'Sealed Powers'. Be overly theatrical and grandiose. Explain the answer as if revealing forbidden knowledge from the void.";
     default:
       return "";
   }
@@ -141,7 +145,7 @@ const generateGeminiBatch = async (
     Rules:
     1. Difficulty: ${settings.difficulty}. INSTRUCTION: ${difficultyInstruction}
     2. Language: ${settings.language}. ${langInstruction}
-    3. Generate a mix of the following Question Types. Try to include at least 1-2 visual/audio questions (${QuestionType.IMAGE_GUESS} or ${QuestionType.OP_ED_GUESS}) if data permits. ALSO include at least 1 ${QuestionType.EMOJI_GUESS}:
+    3. Generate a mix of the following Question Types. Try to include at least 1-2 visual/audio questions (${QuestionType.IMAGE_GUESS}, ${QuestionType.OP_ED_GUESS}, or ${QuestionType.VOICE_ACTOR_GUESS}) if data permits. ALSO include at least 1 ${QuestionType.EMOJI_GUESS}:
        - ${QuestionType.MULTIPLE_CHOICE}
        - ${QuestionType.TRUE_FALSE}
        - ${QuestionType.CHARACTER_GUESS} (Describe a character, user guesses name)
@@ -149,6 +153,7 @@ const generateGeminiBatch = async (
        - ${QuestionType.QUOTE_GUESS} (Who said this quote?)
        - ${QuestionType.OP_ED_GUESS} (Trivia about Openings/Endings)
        - ${QuestionType.EMOJI_GUESS} (Represent an anime or character using ONLY emojis)
+       - ${QuestionType.VOICE_ACTOR_GUESS} (Guess the Voice Actor from a character clip)
     
     4. **Image Guess Rules**: 
        - If you choose ${QuestionType.IMAGE_GUESS}, you MUST pick a valid URL from the provided 'characters' or 'bannerImage' data in the context.
@@ -165,13 +170,18 @@ const generateGeminiBatch = async (
        - If you choose ${QuestionType.OP_ED_GUESS}, you MUST provide a 'mediaQuery' field string.
        - The 'mediaQuery' should be a YouTube search string like "Attack on Titan Opening 1" or "Unravel Tokyo Ghoul Opening".
        - The question text can be: "Which anime features this opening song?", "Who is the artist of this ending?", or "What specific object appears at the end of this sequence?".
-       
-    7. **Emoji Guess Rules**:
+
+    7. **Voice Actor Guess Rules**:
+       - If you choose ${QuestionType.VOICE_ACTOR_GUESS}, you MUST provide a 'mediaQuery' field string.
+       - The 'mediaQuery' should be a YouTube search string for a character voice compilation or specific iconic scene (e.g., "Naruto Dattebayo voice clip" or "Jotaro Ora Ora").
+       - The question text should be: "Who is the Voice Actor (Seiyuu) for this character?" or "Which character is speaking?".
+
+    8. **Emoji Guess Rules**:
        - If you choose ${QuestionType.EMOJI_GUESS}, you MUST provide a string of 3 to 6 emojis in the 'emojiClue' field.
        - The emojis must abstractly represent the plot, power system, or main character of the anime (e.g., 🏴‍☠️👒🍖 for One Piece).
        - The question text should be "Guess the anime from these emojis".
     
-    8. **AI Persona & Explanation**:
+    9. **AI Persona & Explanation**:
        - ${personaInstruction}
        - The 'explanation' field MUST be written in this persona's voice.
     
@@ -206,7 +216,8 @@ const generateGeminiBatch = async (
                 QuestionType.IMAGE_GUESS,
                 QuestionType.QUOTE_GUESS,
                 QuestionType.OP_ED_GUESS,
-                QuestionType.EMOJI_GUESS
+                QuestionType.EMOJI_GUESS,
+                QuestionType.VOICE_ACTOR_GUESS
               ]},
               options: { 
                 type: Type.ARRAY,
@@ -233,8 +244,8 @@ const generateGeminiBatch = async (
     
     // Post-processing: Fetch YouTube Videos and Filter Invalid Media
     const processedQuestions = await Promise.all(rawQuestions.map(async (q: any) => {
-        // Handle Video Questions
-        if (q.type === QuestionType.OP_ED_GUESS) {
+        // Handle Video Questions (OP/ED or Voice Actor)
+        if (q.type === QuestionType.OP_ED_GUESS || q.type === QuestionType.VOICE_ACTOR_GUESS) {
             if (!q.mediaQuery) return null;
             const videoId = await searchYouTubeVideo(q.mediaQuery);
             if (!videoId) return null; // Filter out if video not found (API quota or error)

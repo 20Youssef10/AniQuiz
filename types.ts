@@ -13,6 +13,7 @@ export enum QuestionType {
   QUOTE_GUESS = 'quote_guess',
   OP_ED_GUESS = 'op_ed_guess',
   EMOJI_GUESS = 'emoji_guess', // New Type
+  VOICE_ACTOR_GUESS = 'voice_actor_guess',
 }
 
 export enum GameMode {
@@ -40,6 +41,7 @@ export enum AIPersona {
   HERO = 'Hero', // All Might / Goku style
   TSUNDERE = 'Tsundere', // Asuka / Rin style
   VILLAIN = 'Villain', // Madara / Aizen style
+  CHUUNIBYOU = 'Chuunibyou', // Rikka / Megumin / Gundham style
 }
 
 export interface AnimeCharacter {

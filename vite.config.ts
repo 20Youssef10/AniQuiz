@@ -16,5 +16,10 @@ export default defineConfig(({ mode }) => {
       // Polyfill process.env.API_KEY so it works in the browser build
       'process.env.API_KEY': JSON.stringify(apiKey),
     },
+    test: {
+      globals: true,
+      environment: 'jsdom',
+      setupFiles: [],
+    },
   }
 })

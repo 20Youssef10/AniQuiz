@@ -495,6 +495,19 @@ export default function App() {
             </div>
           </div>
        )}
+
+       {/* AI Persona */}
+       <div>
+         <label className="block text-sm font-semibold mb-3 text-gray-300 uppercase tracking-wider">{isArabic ? 'شخصية الذكاء الاصطناعي' : 'AI Persona'}</label>
+         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            {Object.values(AIPersona).map(persona => (
+               <button key={persona} onClick={() => setState(p => ({...p, settings: {...p.settings, aiPersona: persona}}))}
+                  className={`py-2 rounded-lg text-sm font-medium ${state.settings.aiPersona === persona ? 'bg-anime-accent text-white' : 'bg-white/5 text-gray-400'}`}>
+                  {persona}
+               </button>
+            ))}
+         </div>
+       </div>
        
        {/* Host Extra Inputs */}
        {isRoomSetup && (
