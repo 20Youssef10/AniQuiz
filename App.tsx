@@ -34,23 +34,35 @@ import { playSound } from './utils/sound';
 // Constants
 const QUESTION_TIMER_SECONDS = 15;
 
+const DEFAULT_SETTINGS = {
+  difficulty: Difficulty.MEDIUM,
+  questionCount: 5,
+  topic: 'All',
+  language: Language.ENGLISH,
+  contentType: ContentType.ANIME,
+  searchQuery: '',
+  gameMode: GameMode.CLASSIC,
+  aiPersona: AIPersona.DEFAULT,
+  spoilerProtection: false,
+};
+
+const loadSavedSettings = () => {
+  try {
+    const saved = localStorage.getItem('aniquiz_settings');
+    if (saved) return { ...DEFAULT_SETTINGS, ...JSON.parse(saved) };
+  } catch (e) {
+    console.warn("Failed to load settings:", e);
+  }
+  return DEFAULT_SETTINGS;
+};
+
 // Initial State
 const INITIAL_STATE: QuizState = {
   status: 'idle',
   questions: [],
   currentIndex: 0,
   score: 0,
-  settings: {
-    difficulty: Difficulty.MEDIUM,
-    questionCount: 5,
-    topic: 'All',
-    language: Language.ENGLISH,
-    contentType: ContentType.ANIME,
-    searchQuery: '',
-    gameMode: GameMode.CLASSIC,
-    aiPersona: AIPersona.DEFAULT,
-    spoilerProtection: false,
-  },
+  settings: loadSavedSettings(),
   answers: {},
   timeLeft: QUESTION_TIMER_SECONDS,
 };
@@ -99,6 +111,15 @@ export default function App() {
     }
     document.title = title;
   }, [view, state.settings.gameMode]);
+
+  // --- Settings Persistence ---
+  useEffect(() => {
+    try {
+      localStorage.setItem('aniquiz_settings', JSON.stringify(state.settings));
+    } catch (e) {
+      console.warn("Failed to save settings:", e);
+    }
+  }, [state.settings]);
 
   // --- Initialize Auth & Async Challenge Loading ---
   useEffect(() => {
@@ -278,12 +299,33 @@ export default function App() {
     
     try {
       const mediaData = await fetchMediaData({ ...state.settings, searchQuery: searchInput });
-      // Use the hostApiKey state (which defaults to env var)
-      const questions = await generateQuizQuestions(mediaData, state.settings, hostApiKey); 
 
       let themeImage = undefined;
       if (state.settings.contentType === ContentType.SPECIFIC && mediaData.length > 0) {
         themeImage = mediaData[0].bannerImage || mediaData[0].coverImage?.large;
+      }
+
+      let questions: any[] = [];
+      let retries = 3;
+      let lastErr: any;
+
+      while (retries > 0 && questions.length === 0) {
+          try {
+             // Use the hostApiKey state (which defaults to env var)
+             questions = await generateQuizQuestions(mediaData, state.settings, hostApiKey);
+             if (questions.length === 0) {
+                throw new Error("Generation returned empty. Retrying...");
+             }
+             break; // Success!
+          } catch (e) {
+             console.warn(`Generation failed, retrying... (${retries} left)`, e);
+             lastErr = e;
+             retries--;
+          }
+      }
+
+      if (questions.length === 0) {
+         throw lastErr || new Error("Failed to generate questions after multiple attempts. Please try again.");
       }
 
       playSound('start');

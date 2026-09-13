@@ -642,6 +642,7 @@ export const TypingGame: React.FC<{ onExit: () => void }> = ({ onExit }) => {
   const [lives, setLives] = useState(5);
   const [gameOver, setGameOver] = useState(false);
   const [gameStarted, setGameStarted] = useState(false);
+  const [floatingTexts, setFloatingTexts] = useState<{ id: number, text: string, x: number, y: number }[]>([]);
   
   // Refs for loop
   const requestRef = useRef<number>(0);
@@ -726,6 +727,14 @@ export const TypingGame: React.FC<{ onExit: () => void }> = ({ onExit }) => {
 
     const matchIndex = wordsRef.current.findIndex(w => w.text.toLowerCase() === val.toLowerCase());
     if (matchIndex !== -1) {
+       // Visual Feedback
+       const matchedWord = wordsRef.current[matchIndex];
+       const floatId = Date.now();
+       setFloatingTexts(prev => [...prev, { id: floatId, text: "+10", x: matchedWord.x, y: matchedWord.y }]);
+       setTimeout(() => {
+          setFloatingTexts(prev => prev.filter(f => f.id !== floatId));
+       }, 1000);
+
        // Destroy
        wordsRef.current.splice(matchIndex, 1);
        setWords([...wordsRef.current]);
@@ -771,6 +780,17 @@ export const TypingGame: React.FC<{ onExit: () => void }> = ({ onExit }) => {
             </div>
           ))}
           
+          {/* Floating Texts for Feedback */}
+          {floatingTexts.map(f => (
+             <div
+               key={f.id}
+               className="absolute text-green-400 font-black text-xl drop-shadow-md animate-fade-in-up transform -translate-x-1/2 -translate-y-full"
+               style={{ left: `${f.x}%`, top: `${f.y}%` }}
+             >
+                {f.text}
+             </div>
+          ))}
+
           {/* Danger Zone Line */}
           <div className="absolute bottom-[60px] w-full h-px bg-red-500/50 border-t border-dashed border-red-500"></div>
        </div>
