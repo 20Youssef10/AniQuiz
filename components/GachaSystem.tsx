@@ -91,7 +91,7 @@ const GachaSystem: React.FC<GachaSystemProps> = ({ user, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md animate-fade-in">
       <div className="w-full max-w-md p-6 relative text-center">
-        <button onClick={onClose} className="absolute top-0 right-0 text-gray-400 hover:text-white p-2">✕</button>
+        <button onClick={onClose} aria-label="Close gacha" className="absolute top-0 right-0 text-gray-400 hover:text-white p-2">✕</button>
         
         <h2 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-anime-primary to-anime-accent mb-2">Daily Summon</h2>
         <p className="text-gray-400 mb-8">Test your luck and build your harem/collection!</p>
