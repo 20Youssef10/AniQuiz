@@ -16,7 +16,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, selectedAnswer, o
 
   // Reset blur when question changes
   useEffect(() => {
-    if (question.type === QuestionType.IMAGE_GUESS || question.type === QuestionType.OP_ED_GUESS) {
+    if (question.type === QuestionType.IMAGE_GUESS || question.type === QuestionType.OP_ED_GUESS || question.type === QuestionType.VOICE_ACTOR_GUESS) {
       setBlurAmount(20); // Start with heavy blur
     } else {
       setBlurAmount(0);
@@ -24,7 +24,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, selectedAnswer, o
     setShakingOption(null);
   }, [question]);
 
-  // Gradually reduce blur over time
+  // Gradually reduce blur over time (Only for Image and OP/ED)
   useEffect(() => {
     let interval: any;
     if ((question.type === QuestionType.IMAGE_GUESS || question.type === QuestionType.OP_ED_GUESS) && !isRevealed && blurAmount > 0) {
@@ -113,6 +113,37 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, selectedAnswer, o
              <div className="flex justify-center items-center py-6 bg-white/5 rounded-xl border border-white/10 shadow-inner">
                 <div className="text-6xl md:text-8xl tracking-widest animate-pop filter drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]">
                    {question.emojiClue}
+                </div>
+             </div>
+          )}
+
+          {/* Voice Actor Guess Player */}
+          {question.type === QuestionType.VOICE_ACTOR_GUESS && question.videoId && (
+             <div className="flex justify-center flex-col items-center">
+                <div className="relative w-full max-w-lg aspect-video rounded-xl overflow-hidden shadow-lg border border-white/10 bg-black">
+                   <iframe
+                      width="100%"
+                      height="100%"
+                      src={`https://www.youtube.com/embed/${question.videoId}?autoplay=1&controls=1&modestbranding=1&showinfo=0&rel=0`}
+                      title="YouTube video player"
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      style={{
+                          filter: isRevealed ? 'none' : `blur(100px)`, // Always heavily blurred until revealed
+                          pointerEvents: 'auto',
+                          transition: 'filter 1s ease-out'
+                      }}
+                   ></iframe>
+
+                   {!isRevealed && (
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
+                         <div className="bg-anime-primary/90 px-6 py-4 rounded-full text-white backdrop-blur-md animate-pulse border border-white/20 shadow-xl">
+                            <span className="text-2xl mr-2">🎙️</span>
+                            <span className="font-bold tracking-wider">WHO IS SPEAKING?</span>
+                         </div>
+                      </div>
+                   )}
                 </div>
              </div>
           )}

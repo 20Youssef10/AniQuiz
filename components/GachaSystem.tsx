@@ -97,17 +97,32 @@ const GachaSystem: React.FC<GachaSystemProps> = ({ user, onClose }) => {
         <p className="text-gray-400 mb-8">Test your luck and build your harem/collection!</p>
 
         {!pulledCard ? (
-          <div className="glass-panel p-8 rounded-3xl flex flex-col items-center">
-             <div className="text-6xl mb-6 animate-bounce">🎁</div>
-             {canPull ? (
-               <Button onClick={handlePull} disabled={loading} fullWidth className="!text-xl py-4 !bg-gradient-to-r from-pink-500 to-purple-600">
-                 {loading ? 'Summoning...' : 'SUMMON x1'}
-               </Button>
+          <div className="glass-panel p-8 rounded-3xl flex flex-col items-center min-h-[300px] justify-center transition-all">
+             {loading ? (
+                 <div className="flex flex-col items-center justify-center animate-fade-in">
+                    <div className="relative">
+                        <div className="w-32 h-32 border-4 border-anime-secondary/30 rounded-full animate-[spin_3s_linear_infinite]"></div>
+                        <div className="absolute inset-0 w-32 h-32 border-4 border-t-anime-primary border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
+                        <div className="absolute inset-0 flex items-center justify-center text-4xl animate-pulse">✨</div>
+                    </div>
+                    <p className="mt-6 text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-anime-primary to-anime-accent animate-pulse tracking-widest">
+                        OPENING GATE...
+                    </p>
+                 </div>
              ) : (
-               <div className="text-center">
-                 <p className="text-gray-400 mb-2">Next summon available in:</p>
-                 <div className="text-2xl font-mono font-bold text-white">{timeLeft}</div>
-               </div>
+                <>
+                 <div className="text-7xl mb-6 animate-bounce drop-shadow-[0_0_15px_rgba(236,72,153,0.5)]">🎁</div>
+                 {canPull ? (
+                   <Button onClick={handlePull} fullWidth className="!text-xl py-4 !bg-gradient-to-r from-pink-500 to-purple-600 shadow-lg shadow-purple-500/30 hover:scale-105 transition-transform">
+                     SUMMON x1
+                   </Button>
+                 ) : (
+                   <div className="text-center">
+                     <p className="text-gray-400 mb-2">Next summon available in:</p>
+                     <div className="text-2xl font-mono font-bold text-white bg-black/20 px-4 py-2 rounded-lg border border-white/5">{timeLeft}</div>
+                   </div>
+                 )}
+                </>
              )}
           </div>
         ) : (
