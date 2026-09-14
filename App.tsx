@@ -679,6 +679,23 @@ export default function App() {
      );
   }
 
+  if (state.status === 'error') {
+    return (
+      <div className={`min-h-screen bg-anime-dark text-white ${fontClass} ${direction === 'rtl' ? 'rtl' : 'ltr'} flex flex-col items-center justify-center p-4`}>
+        <div className="glass-panel p-8 rounded-3xl max-w-lg w-full text-center space-y-6">
+           <h2 className="text-3xl font-bold text-red-400 mb-2">Error</h2>
+           <p className="text-gray-300 text-lg">{state.error || "Something went wrong."}</p>
+           <Button fullWidth onClick={() => {
+              setView('home');
+              setState(prev => ({ ...prev, status: 'idle', error: undefined }));
+           }}>
+             Return Home
+           </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (state.status === 'completed') {
     return (
       <div className={`min-h-screen bg-anime-dark text-white ${fontClass} ${direction === 'rtl' ? 'rtl' : 'ltr'} flex items-center justify-center`}>
@@ -703,7 +720,7 @@ export default function App() {
         }}
       >
         <div className="w-full max-w-4xl flex justify-between items-center py-4 mb-4">
-           <Button variant="ghost" onClick={() => {
+           <Button variant="ghost" aria-label="Exit game" onClick={() => {
               if (confirm("Exit game? Progress will be lost.")) restartGame();
            }}>
              ✕ Exit
