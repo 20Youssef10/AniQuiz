@@ -70,12 +70,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLoginSuccess }) => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
            {!isLogin && (
-             <input type="text" placeholder="Ninja Name" required className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3" value={name} onChange={e => setName(e.target.value)} />
+             <input type="text" placeholder="Ninja Name" aria-label="Ninja Name" required className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3" value={name} onChange={e => setName(e.target.value)} />
            )}
-           <input type="email" placeholder="Email" required className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3" value={email} onChange={e => setEmail(e.target.value)} />
-           <input type="password" placeholder="Password" required className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3" value={password} onChange={e => setPassword(e.target.value)} />
+           <input type="email" placeholder="Email" aria-label="Email" required className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3" value={email} onChange={e => setEmail(e.target.value)} />
+           <input type="password" placeholder="Password" aria-label="Password" required className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3" value={password} onChange={e => setPassword(e.target.value)} />
            
-           {error && <p className="text-red-400 text-xs">{error}</p>}
+           {error && <p className="text-red-400 text-xs" role="alert" aria-live="polite">{error}</p>}
            
            <Button fullWidth disabled={loading}>
              {loading ? 'Processing...' : (isLogin ? 'Login' : 'Sign Up')}
