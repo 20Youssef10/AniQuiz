@@ -575,7 +575,7 @@ export const ChatGame: React.FC<{ onExit: () => void }> = ({ onExit }) => {
             <h2 className="text-3xl font-bold mb-6 text-center">Select Character</h2>
             <div className="grid grid-cols-2 gap-4">
                {CHARACTERS.map(char => (
-                 <div key={char.id} onClick={() => startChat(char)} className="glass-panel p-4 rounded-xl cursor-pointer hover:bg-white/10 transition-all flex flex-col items-center gap-3">
+                 <div key={char.id} onClick={() => startChat(char)} className="glass-panel p-4 rounded-xl cursor-pointer hover:bg-white/10 transition-all flex flex-col items-center gap-3" role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startChat(char); } }}>
                     <img src={char.avatar} className="w-20 h-20 rounded-full object-cover border-2 border-white/20" alt={char.name} />
                     <h3 className="font-bold text-lg">{char.name}</h3>
                  </div>
@@ -617,6 +617,7 @@ export const ChatGame: React.FC<{ onExit: () => void }> = ({ onExit }) => {
             <div className="p-4 bg-black/40 border-t border-white/10 flex gap-2">
                <input 
                  type="text" 
+                 aria-label="Chat Message"
                  value={input}
                  onChange={(e) => setInput(e.target.value)}
                  onKeyDown={(e) => e.key === 'Enter' && handleSend()}
@@ -800,6 +801,7 @@ export const TypingGame: React.FC<{ onExit: () => void }> = ({ onExit }) => {
           <input 
             autoFocus
             type="text" 
+            aria-label="Type attack"
             value={input}
             onChange={handleInput}
             placeholder="TYPE TO ATTACK..."

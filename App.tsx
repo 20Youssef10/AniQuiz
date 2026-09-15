@@ -522,7 +522,7 @@ export default function App() {
        {state.settings.contentType === ContentType.SPECIFIC ? (
           <div>
             <label className="block text-sm font-semibold mb-3 text-gray-300 uppercase tracking-wider">{isArabic ? 'اسم الأنمي' : 'Name'}</label>
-            <input type="text" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} placeholder="e.g. One Piece" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white transition-all focus:border-anime-primary outline-none" />
+            <input type="text" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} aria-label="Search Query" placeholder="e.g. One Piece" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white transition-all focus:border-anime-primary outline-none" />
           </div>
        ) : (
           <div>
@@ -556,11 +556,11 @@ export default function App() {
          <div className="pt-4 border-t border-white/10 space-y-4">
             <div>
                <label className="block text-sm font-semibold mb-2 text-green-400">Host Name</label>
-               <input type="text" value={playerName} onChange={e => setPlayerName(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3" />
+               <input type="text" aria-label="Player Name" value={playerName} onChange={e => setPlayerName(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3" />
             </div>
             <div>
                <label className="block text-sm font-semibold mb-2 text-green-400">Gemini API Key (Required for Host)</label>
-               <input type="password" value={hostApiKey} onChange={e => setHostApiKey(e.target.value)} placeholder="AIza..." className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3" />
+               <input type="password" aria-label="Host API Key" value={hostApiKey} onChange={e => setHostApiKey(e.target.value)} placeholder="AIza..." className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3" />
                <p className="text-xs text-gray-500 mt-1">The key is used only to generate questions and is not stored.</p>
             </div>
             <Button fullWidth onClick={handleCreateRoom} className="!bg-green-600">Create Room & Lobby</Button>
@@ -574,6 +574,7 @@ export default function App() {
                <label className="block text-sm font-semibold mb-2 text-gray-400">{isArabic ? 'مفتاح API (اختياري)' : 'Gemini API Key (Optional)'}</label>
                <input 
                  type="password" 
+                 aria-label="Gemini API Key"
                  value={hostApiKey} 
                  onChange={e => setHostApiKey(e.target.value)} 
                  placeholder="Leave empty to use default..." 
@@ -766,12 +767,12 @@ export default function App() {
       
       {/* Top Nav */}
       <nav className="p-6 flex justify-between items-center max-w-7xl mx-auto">
-         <h1 className="text-2xl font-black tracking-tighter italic bg-clip-text text-transparent bg-gradient-to-r from-anime-primary to-anime-accent cursor-pointer" onClick={() => setView('home')}>
+         <h1 className="text-2xl font-black tracking-tighter italic bg-clip-text text-transparent bg-gradient-to-r from-anime-primary to-anime-accent cursor-pointer" onClick={() => setView('home')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setView('home'); } }}>
             ANIQUIZ<span className="text-white">AI</span>
          </h1>
          <div className="flex gap-4">
             {user ? (
-               <div className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setShowProfile(true)}>
+               <div className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setShowProfile(true)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowProfile(true); } }}>
                   <div className="text-right hidden md:block">
                      <div className="text-sm font-bold">{user.displayName}</div>
                      <div className="text-xs text-anime-secondary">LVL {userProfile?.level || 1}</div>
@@ -848,8 +849,8 @@ export default function App() {
          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
             <div className="glass-panel p-8 rounded-2xl max-w-sm w-full space-y-4">
                <h2 className="text-2xl font-bold mb-4">Join Party</h2>
-               <input type="text" placeholder="Your Name" value={playerName} onChange={e => setPlayerName(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3" />
-               <input type="text" placeholder="Room Code (e.g. A1B2C3)" value={roomCodeInput} onChange={e => setRoomCodeInput(e.target.value.toUpperCase())} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 font-mono tracking-widest uppercase" maxLength={6} />
+               <input type="text" aria-label="Your Name" placeholder="Your Name" value={playerName} onChange={e => setPlayerName(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3" />
+               <input type="text" aria-label="Room Code" placeholder="Room Code (e.g. A1B2C3)" value={roomCodeInput} onChange={e => setRoomCodeInput(e.target.value.toUpperCase())} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 font-mono tracking-widest uppercase" maxLength={6} />
                {state.error && <p className="text-red-400 text-sm">{state.error}</p>}
                <Button fullWidth onClick={handleJoinRoom}>Enter Room</Button>
                <Button fullWidth variant="ghost" onClick={() => { setView('home'); setState(p => ({...p, error: undefined})); }}>Cancel</Button>

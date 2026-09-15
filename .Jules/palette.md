@@ -9,3 +9,11 @@
 ## 2025-02-28 - Added keyboard focus states to global Button
 **Learning:** Found that the core `Button` component lacked visual focus states for keyboard navigation. While mouse users see hover states, keyboard users had no clear indicator of which button was active.
 **Action:** Always add `focus-visible` styles (like rings and offsets) to interactive components to ensure keyboard accessibility without affecting the mouse experience.
+
+## 2023-10-27 - Custom interactive elements need full keyboard accessibility
+**Learning:** Found multiple instances where non-interactive elements (like `div` or `h1`) had `onClick` handlers for navigation or selection (e.g., in `App.tsx`, `ArcadeHub.tsx`, `MiniGames.tsx`). This breaks keyboard navigation.
+**Action:** Always add `role="button"`, `tabIndex={0}`, and an `onKeyDown` handler listening for `Enter` and `Space` when adding click events to non-semantic elements, or replace them with native `<button>` tags when possible.
+
+## 2023-10-27 - Form inputs missing context for screen readers
+**Learning:** Several standalone inputs across the application (search, API key input, chat input) lacked associated labels, relying only on visual placeholders.
+**Action:** Always add descriptive `aria-label`s to inputs that don't have a visible, associated `<label>` tag to ensure accessibility for screen reader users.

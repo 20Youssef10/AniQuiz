@@ -79,32 +79,32 @@ const ArcadeHub: React.FC<ArcadeHubProps> = ({ onSelectPreset, onSelectMiniGame,
            <h3 className="text-xl font-bold text-gray-300 border-b border-white/10 pb-2">Mini Games</h3>
            
            <div className="grid grid-cols-2 gap-4">
-              <div onClick={() => onSelectMiniGame('silhouette')} className="group cursor-pointer glass-panel p-4 rounded-2xl hover:bg-white/10 transition-all border-b-4 border-gray-100 flex flex-col items-center text-center">
+              <div onClick={() => onSelectMiniGame('silhouette')} className="group cursor-pointer glass-panel p-4 rounded-2xl hover:bg-white/10 transition-all border-b-4 border-gray-100 flex flex-col items-center text-center" role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectMiniGame('silhouette'); } }}>
                   <div className="text-3xl mb-2">⚫</div>
                   <h4 className="font-bold text-sm group-hover:text-gray-300">Silhouette Challenge</h4>
               </div>
 
-              <div onClick={() => onSelectMiniGame('story')} className="group cursor-pointer glass-panel p-4 rounded-2xl hover:bg-white/10 transition-all border-b-4 border-purple-500 flex flex-col items-center text-center">
+              <div onClick={() => onSelectMiniGame('story')} className="group cursor-pointer glass-panel p-4 rounded-2xl hover:bg-white/10 transition-all border-b-4 border-purple-500 flex flex-col items-center text-center" role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectMiniGame('story'); } }}>
                   <div className="text-3xl mb-2">📖</div>
                   <h4 className="font-bold text-sm group-hover:text-purple-400">Story Mode</h4>
               </div>
 
-              <div onClick={() => onSelectMiniGame('chat')} className="group cursor-pointer glass-panel p-4 rounded-2xl hover:bg-white/10 transition-all border-b-4 border-pink-500 flex flex-col items-center text-center">
+              <div onClick={() => onSelectMiniGame('chat')} className="group cursor-pointer glass-panel p-4 rounded-2xl hover:bg-white/10 transition-all border-b-4 border-pink-500 flex flex-col items-center text-center" role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectMiniGame('chat'); } }}>
                   <div className="text-3xl mb-2">💬</div>
                   <h4 className="font-bold text-sm group-hover:text-pink-400">Chat Simulator</h4>
               </div>
 
-              <div onClick={() => onSelectMiniGame('typing')} className="group cursor-pointer glass-panel p-4 rounded-2xl hover:bg-white/10 transition-all border-b-4 border-red-500 flex flex-col items-center text-center">
+              <div onClick={() => onSelectMiniGame('typing')} className="group cursor-pointer glass-panel p-4 rounded-2xl hover:bg-white/10 transition-all border-b-4 border-red-500 flex flex-col items-center text-center" role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectMiniGame('typing'); } }}>
                   <div className="text-3xl mb-2">⌨️</div>
                   <h4 className="font-bold text-sm group-hover:text-red-400">Typing Defender</h4>
               </div>
 
-              <div onClick={() => onSelectMiniGame('memory')} className="group cursor-pointer glass-panel p-4 rounded-2xl hover:bg-white/10 transition-all border-b-4 border-blue-500 flex flex-col items-center text-center">
+              <div onClick={() => onSelectMiniGame('memory')} className="group cursor-pointer glass-panel p-4 rounded-2xl hover:bg-white/10 transition-all border-b-4 border-blue-500 flex flex-col items-center text-center" role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectMiniGame('memory'); } }}>
                   <div className="text-3xl mb-2">🃏</div>
                   <h4 className="font-bold text-sm group-hover:text-blue-400">Memory Match</h4>
               </div>
 
-              <div onClick={() => onSelectMiniGame('whack')} className="group cursor-pointer glass-panel p-4 rounded-2xl hover:bg-white/10 transition-all border-b-4 border-green-500 flex flex-col items-center text-center">
+              <div onClick={() => onSelectMiniGame('whack')} className="group cursor-pointer glass-panel p-4 rounded-2xl hover:bg-white/10 transition-all border-b-4 border-green-500 flex flex-col items-center text-center" role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelectMiniGame('whack'); } }}>
                   <div className="text-3xl mb-2">🔨</div>
                   <h4 className="font-bold text-sm group-hover:text-green-400">Whack-a-Slime</h4>
               </div>
@@ -116,7 +116,7 @@ const ArcadeHub: React.FC<ArcadeHubProps> = ({ onSelectPreset, onSelectMiniGame,
            <h3 className="text-xl font-bold text-gray-300 border-b border-white/10 pb-2">Quiz Challenges</h3>
            
            {presets.map((p, i) => (
-             <div key={i} onClick={() => handlePreset(p)} className="group cursor-pointer glass-panel p-4 rounded-xl flex items-center gap-4 hover:bg-white/10 transition-all">
+             <div key={i} onClick={() => handlePreset(p)} className="group cursor-pointer glass-panel p-4 rounded-xl flex items-center gap-4 hover:bg-white/10 transition-all" role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handlePreset(p); } }}>
                 <div className="text-3xl bg-black/20 p-3 rounded-lg">{p.icon}</div>
                 <div>
                    <h4 className="font-bold group-hover:text-anime-primary transition-colors">{p.title}</h4>
