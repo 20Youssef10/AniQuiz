@@ -130,7 +130,7 @@ const ScoreBoard: React.FC<ScoreBoardProps> = ({ state, onRestart, onSaveStats }
           ) : (
             <div className="bg-white/10 p-4 rounded-xl border border-anime-primary animate-fade-in">
                <p className="text-sm text-gray-300 mb-2">{isArabic ? "شارك هذا الرابط:" : "Share this link:"}</p>
-               <input readOnly value={challengeLink} className="w-full bg-black/50 text-white p-2 rounded text-xs mb-2 border border-white/10" />
+               <input readOnly aria-label="Share Link" value={challengeLink} className="w-full bg-black/50 text-white p-2 rounded text-xs mb-2 border border-white/10" />
                <Button onClick={copyToClipboard} fullWidth variant="primary" className="text-sm py-2">
                  {isArabic ? "نسخ الرابط" : "Copy Link"}
                </Button>
