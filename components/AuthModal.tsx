@@ -54,7 +54,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLoginSuccess }) => {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
       <div className="glass-panel p-8 rounded-2xl max-w-sm w-full relative">
-        <button onClick={onClose} aria-label="Close modal" className="absolute top-4 right-4 text-gray-400 hover:text-white">✕</button>
+        <button onClick={onClose} aria-label="Close modal" className="absolute top-4 right-4 text-gray-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white rounded">✕</button>
         
         <h2 className="text-2xl font-bold mb-6 text-center">{isLogin ? 'Welcome Back' : 'Join the Ranks'}</h2>
         
@@ -70,10 +70,19 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLoginSuccess }) => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
            {!isLogin && (
-             <input type="text" placeholder="Ninja Name" aria-label="Ninja Name" required className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3" value={name} onChange={e => setName(e.target.value)} />
+             <div>
+               <label htmlFor="ninja-name" className="block text-sm font-medium mb-1 text-gray-300">Ninja Name <span className="text-red-500">*</span></label>
+               <input id="ninja-name" type="text" placeholder="Ninja Name" aria-label="Ninja Name" required className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white" value={name} onChange={e => setName(e.target.value)} />
+             </div>
            )}
-           <input type="email" placeholder="Email" aria-label="Email" required className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3" value={email} onChange={e => setEmail(e.target.value)} />
-           <input type="password" placeholder="Password" aria-label="Password" required className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3" value={password} onChange={e => setPassword(e.target.value)} />
+           <div>
+             <label htmlFor="email" className="block text-sm font-medium mb-1 text-gray-300">Email <span className="text-red-500">*</span></label>
+             <input id="email" type="email" placeholder="Email" aria-label="Email" required className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white" value={email} onChange={e => setEmail(e.target.value)} />
+           </div>
+           <div>
+             <label htmlFor="password" className="block text-sm font-medium mb-1 text-gray-300">Password <span className="text-red-500">*</span></label>
+             <input id="password" type="password" placeholder="Password" aria-label="Password" required className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white" value={password} onChange={e => setPassword(e.target.value)} />
+           </div>
            
            {error && <p className="text-red-400 text-xs" role="alert" aria-live="polite">{error}</p>}
            
@@ -84,7 +93,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLoginSuccess }) => {
 
         <p className="text-center mt-4 text-sm text-gray-400">
           {isLogin ? "No account? " : "Already have an account? "}
-          <button onClick={() => setIsLogin(!isLogin)} className="text-anime-primary hover:underline font-bold">
+          <button onClick={() => setIsLogin(!isLogin)} className="text-anime-primary hover:underline font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white rounded px-1">
              {isLogin ? "Sign Up" : "Login"}
           </button>
         </p>

@@ -20,3 +20,7 @@
 ## 2024-05-17 - Added mute button
 **Learning:** Found that the app uses sounds aggressively during interactions but lacked a way to mute them.
 **Action:** Always provide user control over sound effects, persisting the choice to local storage, and ensuring the toggle is accessible.
+
+## 2023-10-27 - Forms require visible labels and focus styles for accessibility
+**Learning:** Found that the inputs in AuthModal lacked visible labels and id bindings, and interactive elements like buttons and inputs lacked proper focus indicators for keyboard navigation.
+**Action:** Always add visible `<label>` tags with `htmlFor` mapped to input `id`s where appropriate, as it's better for accessibility and usability than placeholder text or standalone `aria-label`s. Ensure that all interactive elements have `focus-visible` styles to show focus states for keyboard users.
