@@ -17,3 +17,6 @@
 ## 2023-10-27 - Form inputs missing context for screen readers
 **Learning:** Several standalone inputs across the application (search, API key input, chat input) lacked associated labels, relying only on visual placeholders.
 **Action:** Always add descriptive `aria-label`s to inputs that don't have a visible, associated `<label>` tag to ensure accessibility for screen reader users.
+## 2024-05-17 - Added mute button
+**Learning:** Found that the app uses sounds aggressively during interactions but lacked a way to mute them.
+**Action:** Always provide user control over sound effects, persisting the choice to local storage, and ensuring the toggle is accessible.

@@ -20,6 +20,7 @@ import QuestionCard from './components/QuestionCard';
 import QuestionSkeleton from './components/QuestionSkeleton';
 import Button from './components/Button';
 import LoadingSpinner from './components/LoadingSpinner';
+import GameSettings from './components/GameSettings';
 import ScoreBoard from './components/ScoreBoard';
 import Timer from './components/Timer';
 import LevelProgress from './components/LevelProgress';
@@ -29,7 +30,7 @@ import ArcadeHub from './components/ArcadeHub';
 import GachaSystem from './components/GachaSystem';
 import StoryMode from './components/StoryMode';
 import { MemoryGame, WhackGame, SilhouetteGame, ChatGame, TypingGame } from './components/MiniGames';
-import { playSound } from './utils/sound';
+import { playSound, isAudioMuted, toggleAudioMute } from './utils/sound';
 
 // Constants
 const QUESTION_TIMER_SECONDS = 15;
@@ -67,8 +68,6 @@ const INITIAL_STATE: QuizState = {
   timeLeft: QUESTION_TIMER_SECONDS,
 };
 
-const TOPICS = ['All', 'Action', 'Romance', 'Fantasy', 'Sci-Fi', 'Slice of Life'];
-
 export default function App() {
   const [state, setState] = useState<QuizState>(INITIAL_STATE);
   const [isAnswerRevealed, setIsAnswerRevealed] = useState(false);
@@ -93,6 +92,9 @@ export default function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showGacha, setShowGacha] = useState(false);
+
+  // Audio State
+  const [isMuted, setIsMuted] = useState(isAudioMuted());
 
   // --- Dynamic SEO: Title Updates ---
   useEffect(() => {
@@ -452,147 +454,6 @@ export default function App() {
 
   // --- Render Components ---
 
-  const renderSettings = (isRoomSetup = false) => (
-    <div className="glass-panel p-6 md:p-8 rounded-2xl space-y-8 shadow-2xl ring-1 ring-white/10 animate-fade-in-up">
-       {/* Game Mode */}
-       <div>
-          <label className="block text-sm font-semibold mb-3 text-gray-300 uppercase tracking-wider">{isArabic ? 'نمط اللعب' : 'Game Mode'}</label>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            {Object.values(GameMode).filter(m => m !== GameMode.STORY).map(mode => (
-              <button key={mode} onClick={() => setState(prev => ({ ...prev, settings: { ...prev.settings, gameMode: mode } }))}
-                className={`py-3 px-2 rounded-xl text-sm font-bold border border-transparent transition-all ${state.settings.gameMode === mode ? 'bg-anime-primary text-white shadow-lg scale-105' : 'bg-white/5 text-gray-400 hover:bg-white/10'}`}>
-                {mode}
-              </button>
-            ))}
-          </div>
-       </div>
-       
-       {/* Language & Difficulty */}
-       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-         <div>
-            <label className="block text-sm font-semibold mb-3 text-gray-300 uppercase tracking-wider">{isArabic ? 'اللغة' : 'Language'}</label>
-            <div className="flex gap-2">
-              {Object.values(Language).map(lang => (
-                 <button key={lang} onClick={() => setState(p => ({...p, settings: {...p.settings, language: lang}}))}
-                   className={`flex-1 py-2 rounded-lg text-sm font-medium ${state.settings.language === lang ? 'bg-anime-primary text-white' : 'bg-white/5 text-gray-400'}`}>
-                   {lang === Language.ENGLISH ? 'English' : 'العربية'}
-                 </button>
-              ))}
-            </div>
-         </div>
-         <div>
-            <label className="block text-sm font-semibold mb-3 text-gray-300 uppercase tracking-wider">{isArabic ? 'المستوى' : 'Difficulty'}</label>
-            <div className="grid grid-cols-3 gap-2">
-              {Object.values(Difficulty).map(d => (
-                <button key={d} onClick={() => setState(p => ({...p, settings: {...p.settings, difficulty: d}}))}
-                   className={`py-2 rounded-lg text-sm font-medium ${state.settings.difficulty === d ? 'bg-anime-primary text-white' : 'bg-white/5 text-gray-400'}`}>
-                   {d}
-                </button>
-              ))}
-            </div>
-         </div>
-       </div>
-
-       {/* Question Count */}
-       <div>
-          <label className="block text-sm font-semibold mb-3 text-gray-300 uppercase tracking-wider">{isArabic ? 'عدد الأسئلة' : 'Number of Questions'}</label>
-          <div className="grid grid-cols-4 gap-2">
-            {[5, 10, 15, 20].map(num => (
-              <button key={num} onClick={() => setState(p => ({...p, settings: {...p.settings, questionCount: num}}))}
-                 className={`py-2 rounded-lg text-sm font-medium ${state.settings.questionCount === num ? 'bg-anime-secondary text-white' : 'bg-white/5 text-gray-400'}`}>
-                 {num}
-              </button>
-            ))}
-          </div>
-       </div>
-
-       {/* Content Type */}
-       <div>
-         <label className="block text-sm font-semibold mb-3 text-gray-300 uppercase tracking-wider">{isArabic ? 'نوع المحتوى' : 'Content Type'}</label>
-         <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            {Object.values(ContentType).map(type => (
-               <button key={type} onClick={() => setState(p => ({...p, settings: {...p.settings, contentType: type}}))}
-                  className={`py-2 rounded-lg text-sm font-medium ${state.settings.contentType === type ? 'bg-anime-accent text-white' : 'bg-white/5 text-gray-400'}`}>
-                  {type}
-               </button>
-            ))}
-         </div>
-       </div>
-
-       {state.settings.contentType === ContentType.SPECIFIC ? (
-          <div>
-            <label className="block text-sm font-semibold mb-3 text-gray-300 uppercase tracking-wider">{isArabic ? 'اسم الأنمي' : 'Name'}</label>
-            <input type="text" value={searchInput} onChange={(e) => setSearchInput(e.target.value)} aria-label="Search Query" placeholder="e.g. One Piece" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white transition-all focus:border-anime-primary outline-none" />
-          </div>
-       ) : (
-          <div>
-            <label className="block text-sm font-semibold mb-3 text-gray-300 uppercase tracking-wider">{isArabic ? 'التصنيف' : 'Genre'}</label>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {TOPICS.map(t => (
-                 <button key={t} onClick={() => setState(p => ({...p, settings: {...p.settings, topic: t}}))}
-                    className={`py-2 rounded-lg text-sm font-medium ${state.settings.topic === t ? 'bg-anime-secondary text-white' : 'bg-white/5 text-gray-400'}`}>
-                    {t}
-                 </button>
-              ))}
-            </div>
-          </div>
-       )}
-
-       {/* AI Persona */}
-       <div>
-         <label className="block text-sm font-semibold mb-3 text-gray-300 uppercase tracking-wider">{isArabic ? 'شخصية الذكاء الاصطناعي' : 'AI Persona'}</label>
-         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {Object.values(AIPersona).map(persona => (
-               <button key={persona} onClick={() => setState(p => ({...p, settings: {...p.settings, aiPersona: persona}}))}
-                  className={`py-2 rounded-lg text-sm font-medium ${state.settings.aiPersona === persona ? 'bg-anime-accent text-white' : 'bg-white/5 text-gray-400'}`}>
-                  {persona}
-               </button>
-            ))}
-         </div>
-       </div>
-       
-       {/* Host Extra Inputs */}
-       {isRoomSetup && (
-         <div className="pt-4 border-t border-white/10 space-y-4">
-            <div>
-               <label className="block text-sm font-semibold mb-2 text-green-400">Host Name</label>
-               <input type="text" aria-label="Player Name" value={playerName} onChange={e => setPlayerName(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3" />
-            </div>
-            <div>
-               <label className="block text-sm font-semibold mb-2 text-green-400">Gemini API Key (Required for Host)</label>
-               <input type="password" aria-label="Host API Key" value={hostApiKey} onChange={e => setHostApiKey(e.target.value)} placeholder="AIza..." className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3" />
-               <p className="text-xs text-gray-500 mt-1">The key is used only to generate questions and is not stored.</p>
-            </div>
-            <Button fullWidth onClick={handleCreateRoom} className="!bg-green-600">Create Room & Lobby</Button>
-            <Button fullWidth variant="ghost" onClick={() => setView('home')}>Cancel</Button>
-         </div>
-       )}
-
-       {!isRoomSetup && (
-         <div className="pt-4 border-t border-white/10 space-y-4">
-            <div>
-               <label className="block text-sm font-semibold mb-2 text-gray-400">{isArabic ? 'مفتاح API (اختياري)' : 'Gemini API Key (Optional)'}</label>
-               <input 
-                 type="password" 
-                 aria-label="Gemini API Key"
-                 value={hostApiKey} 
-                 onChange={e => setHostApiKey(e.target.value)} 
-                 placeholder="Leave empty to use default..." 
-                 className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-sm transition-all focus:border-anime-primary outline-none" 
-               />
-               <p className="text-xs text-gray-500 mt-1">
-                 {isArabic 
-                   ? 'اتركه فارغاً لاستخدام المفتاح الافتراضي، أو استخدم مفتاحك الخاص لسرعة أعلى.' 
-                   : 'Leave empty to use the default server key, or use your own for higher rate limits.'}
-               </p>
-            </div>
-            <Button fullWidth onClick={startGameSinglePlayer}>{isArabic ? 'ابدأ' : 'Start Quiz'}</Button>
-            <Button fullWidth variant="ghost" onClick={() => setView('home')} className="mt-2">Back</Button>
-         </div>
-       )}
-    </div>
-  );
-
   // Main Render
   if (state.status === 'loading') {
     return (
@@ -767,10 +628,17 @@ export default function App() {
       
       {/* Top Nav */}
       <nav className="p-6 flex justify-between items-center max-w-7xl mx-auto">
-         <h1 className="text-2xl font-black tracking-tighter italic bg-clip-text text-transparent bg-gradient-to-r from-anime-primary to-anime-accent cursor-pointer" onClick={() => setView('home')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setView('home'); } }}>
+         <h1 className="text-2xl font-black tracking-tighter italic bg-clip-text text-transparent bg-gradient-to-r from-anime-primary to-anime-accent cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white rounded" onClick={() => setView('home')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setView('home'); } }}>
             ANIQUIZ<span className="text-white">AI</span>
          </h1>
-         <div className="flex gap-4">
+         <div className="flex gap-4 items-center">
+            <button
+               onClick={() => setIsMuted(toggleAudioMute())}
+               className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+               aria-label={isMuted ? "Unmute audio" : "Mute audio"}
+            >
+               {isMuted ? '🔇' : '🔊'}
+            </button>
             {user ? (
                <div className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setShowProfile(true)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowProfile(true); } }}>
                   <div className="text-right hidden md:block">
@@ -839,7 +707,20 @@ export default function App() {
       {(view === 'single_setup' || view === 'room_setup') && (
          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
              <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
-                {renderSettings(view === 'room_setup')}
+                <GameSettings
+                  settings={state.settings}
+                  onChange={(settings) => setState(prev => ({ ...prev, settings }))}
+                  isRoomSetup={view === 'room_setup'}
+                  playerName={playerName}
+                  onPlayerNameChange={setPlayerName}
+                  hostApiKey={hostApiKey}
+                  onHostApiKeyChange={setHostApiKey}
+                  searchInput={searchInput}
+                  onSearchInputChange={setSearchInput}
+                  onCreateRoom={handleCreateRoom}
+                  onStartSinglePlayer={startGameSinglePlayer}
+                  onCancel={() => setView('home')}
+                />
              </div>
          </div>
       )}

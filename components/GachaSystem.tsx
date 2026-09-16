@@ -18,6 +18,12 @@ const GachaSystem: React.FC<GachaSystemProps> = ({ user, onClose }) => {
 
   useEffect(() => {
     checkEligibility();
+    // Update timer every minute
+    const intervalId = setInterval(() => {
+      checkEligibility();
+    }, 60000);
+
+    return () => clearInterval(intervalId);
   }, [user]);
 
   const checkEligibility = () => {
