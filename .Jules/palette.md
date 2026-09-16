@@ -17,3 +17,7 @@
 ## 2023-10-27 - Form inputs missing context for screen readers
 **Learning:** Several standalone inputs across the application (search, API key input, chat input) lacked associated labels, relying only on visual placeholders.
 **Action:** Always add descriptive `aria-label`s to inputs that don't have a visible, associated `<label>` tag to ensure accessibility for screen reader users.
+
+## 2023-10-27 - Forms require visible labels and focus styles for accessibility
+**Learning:** Found that the inputs in AuthModal lacked visible labels and id bindings, and interactive elements like buttons and inputs lacked proper focus indicators for keyboard navigation.
+**Action:** Always add visible `<label>` tags with `htmlFor` mapped to input `id`s where appropriate, as it's better for accessibility and usability than placeholder text or standalone `aria-label`s. Ensure that all interactive elements have `focus-visible` styles to show focus states for keyboard users.
