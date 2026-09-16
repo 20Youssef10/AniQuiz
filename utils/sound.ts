@@ -1,4 +1,22 @@
+const MUTED_KEY = 'aniquiz_audio_muted';
+
+export const isAudioMuted = (): boolean => {
+  return localStorage.getItem(MUTED_KEY) === 'true';
+};
+
+export const setAudioMuted = (muted: boolean) => {
+  localStorage.setItem(MUTED_KEY, muted ? 'true' : 'false');
+};
+
+export const toggleAudioMute = (): boolean => {
+  const current = isAudioMuted();
+  setAudioMuted(!current);
+  return !current;
+};
+
 export const playSound = (type: 'correct' | 'wrong' | 'click' | 'start') => {
+  if (isAudioMuted()) return;
+
   try {
     const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioContext) return;
