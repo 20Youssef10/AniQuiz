@@ -24,3 +24,7 @@
 ## 2023-10-27 - Forms require visible labels and focus styles for accessibility
 **Learning:** Found that the inputs in AuthModal lacked visible labels and id bindings, and interactive elements like buttons and inputs lacked proper focus indicators for keyboard navigation.
 **Action:** Always add visible `<label>` tags with `htmlFor` mapped to input `id`s where appropriate, as it's better for accessibility and usability than placeholder text or standalone `aria-label`s. Ensure that all interactive elements have `focus-visible` styles to show focus states for keyboard users.
+
+## 2025-02-28 - Focus styles for custom interactive elements
+**Learning:** Found that custom interactive elements (`div` with `role="button"` and `tabIndex={0}`) in `ArcadeHub.tsx` were focusable but lacked visual feedback when navigating via keyboard, rendering the prior a11y fixes for keyboard interaction incomplete.
+**Action:** Always pair `tabIndex={0}` and keyboard event handlers with explicit `focus-visible` styles to ensure keyboard users can clearly see which element is currently focused.
