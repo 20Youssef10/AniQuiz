@@ -193,7 +193,7 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, selectedAnswer, o
               disabled={isRevealed}
               // Add stagger animation delay
               style={{ animationDelay: `${idx * 100 + 200}ms` }}
-              className={`text-left justify-start h-auto min-h-[60px] animate-fade-in-up opacity-0 
+              className={`text-left justify-start h-auto min-h-[60px] animate-fade-in-up opacity-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-anime-primary focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900
                 ${getButtonStyles(option)} 
                 ${(shakingOption === option || isWrong(option)) ? 'animate-shake !bg-red-500/80 !border-red-500' : ''}
               `}
