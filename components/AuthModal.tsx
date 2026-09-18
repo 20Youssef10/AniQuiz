@@ -54,7 +54,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLoginSuccess }) => {
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-fade-in">
       <div className="glass-panel p-8 rounded-2xl max-w-sm w-full relative">
-        <button onClick={onClose} aria-label="Close modal" className="absolute top-4 right-4 text-gray-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white rounded">✕</button>
+        <button onClick={onClose} aria-label="Close modal" className="absolute top-4 right-4 text-gray-400 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-anime-primary rounded">✕</button>
         
         <h2 className="text-2xl font-bold mb-6 text-center">{isLogin ? 'Welcome Back' : 'Join the Ranks'}</h2>
         
@@ -93,7 +93,7 @@ const AuthModal: React.FC<AuthModalProps> = ({ onClose, onLoginSuccess }) => {
 
         <p className="text-center mt-4 text-sm text-gray-400">
           {isLogin ? "No account? " : "Already have an account? "}
-          <button onClick={() => setIsLogin(!isLogin)} className="text-anime-primary hover:underline font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white rounded px-1">
+          <button onClick={() => setIsLogin(!isLogin)} className="text-anime-primary hover:underline font-bold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-anime-primary rounded px-1">
              {isLogin ? "Sign Up" : "Login"}
           </button>
         </p>

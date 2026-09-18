@@ -28,3 +28,4 @@
 ## 2025-02-28 - Focus styles for custom interactive elements
 **Learning:** Found that custom interactive elements (`div` with `role="button"` and `tabIndex={0}`) in `ArcadeHub.tsx` were focusable but lacked visual feedback when navigating via keyboard, rendering the prior a11y fixes for keyboard interaction incomplete.
 **Action:** Always pair `tabIndex={0}` and keyboard event handlers with explicit `focus-visible` styles to ensure keyboard users can clearly see which element is currently focused.
+## 2024-08-08 - Focus States and Code Splitting\n**Learning:** The application lacked consistent keyboard focus visibility. Large bundle chunks were identified from missing lazy loading.\n**Action:** Applied `focus-visible:ring-anime-primary` uniformly across `AuthModal` and `QuestionCard` components to enhance keyboard accessibility. Used `React.lazy` and `Suspense` for heavy, non-critical features to mitigate Vite build warnings.
