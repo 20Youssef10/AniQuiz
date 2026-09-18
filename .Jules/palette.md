@@ -28,3 +28,7 @@
 ## 2025-02-28 - Focus styles for custom interactive elements
 **Learning:** Found that custom interactive elements (`div` with `role="button"` and `tabIndex={0}`) in `ArcadeHub.tsx` were focusable but lacked visual feedback when navigating via keyboard, rendering the prior a11y fixes for keyboard interaction incomplete.
 **Action:** Always pair `tabIndex={0}` and keyboard event handlers with explicit `focus-visible` styles to ensure keyboard users can clearly see which element is currently focused.
+
+## 2025-02-28 - Replaced raw text loading states with LoadingSpinner
+**Learning:** Found inconsistent and unpolished loading states (raw text with simple animation) in `MiniGames.tsx`. Using raw text for loading screens leads to a poor user experience, especially during long network requests.
+**Action:** Always replace unpolished text-based loading states with the `LoadingSpinner` component to provide a consistent, engaging, and visually appealing experience that matches the app's overall theme and keeps users engaged with trivia facts.
