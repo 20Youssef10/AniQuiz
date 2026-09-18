@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { fetchTopCharacters } from '../services/aniListService';
 import { fetchMalCharacterImage } from '../services/jikanService'; // Import fallback service
+import LoadingSpinner from './LoadingSpinner';
 import { createChatSession } from '../services/geminiService';
 import { Chat, GenerateContentResponse } from '@google/genai';
 import Button from './Button';
@@ -151,7 +152,7 @@ export const SilhouetteGame: React.FC<{ onExit: () => void }> = ({ onExit }) => 
       }
   };
 
-  if (loading) return <div className="text-center p-12 animate-pulse">Summoning Shadows...</div>;
+  if (loading) return <LoadingSpinner message="Summoning Shadows..." />;
 
   const currentRound = rounds[currentRoundIdx];
   const isFinished = currentRoundIdx === rounds.length - 1 && isRevealed;
@@ -337,7 +338,7 @@ export const MemoryGame: React.FC<{ onExit: () => void }> = ({ onExit }) => {
 
   const isWin = cards.length > 0 && cards.every(c => c.isMatched);
 
-  if (loading) return <div className="text-center p-12">Shuffling Deck...</div>;
+  if (loading) return <LoadingSpinner message="Shuffling Deck..." />;
 
   return (
     <div className="flex flex-col items-center animate-fade-in w-full">

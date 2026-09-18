@@ -28,4 +28,7 @@
 ## 2025-02-28 - Focus styles for custom interactive elements
 **Learning:** Found that custom interactive elements (`div` with `role="button"` and `tabIndex={0}`) in `ArcadeHub.tsx` were focusable but lacked visual feedback when navigating via keyboard, rendering the prior a11y fixes for keyboard interaction incomplete.
 **Action:** Always pair `tabIndex={0}` and keyboard event handlers with explicit `focus-visible` styles to ensure keyboard users can clearly see which element is currently focused.
-## 2024-08-08 - Focus States and Code Splitting\n**Learning:** The application lacked consistent keyboard focus visibility. Large bundle chunks were identified from missing lazy loading.\n**Action:** Applied `focus-visible:ring-anime-primary` uniformly across `AuthModal` and `QuestionCard` components to enhance keyboard accessibility. Used `React.lazy` and `Suspense` for heavy, non-critical features to mitigate Vite build warnings.
+
+## 2025-02-28 - Replaced raw text loading states with LoadingSpinner
+**Learning:** Found inconsistent and unpolished loading states (raw text with simple animation) in `MiniGames.tsx`. Using raw text for loading screens leads to a poor user experience, especially during long network requests.
+**Action:** Always replace unpolished text-based loading states with the `LoadingSpinner` component to provide a consistent, engaging, and visually appealing experience that matches the app's overall theme and keeps users engaged with trivia facts.
