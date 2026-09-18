@@ -16,21 +16,27 @@ import {
 import { checkNewAchievements } from './services/levelService';
 import { onAuthStateChanged } from 'firebase/auth';
 
+import { Suspense, lazy } from 'react';
 import QuestionCard from './components/QuestionCard';
 import QuestionSkeleton from './components/QuestionSkeleton';
 import Button from './components/Button';
 import LoadingSpinner from './components/LoadingSpinner';
-import GameSettings from './components/GameSettings';
-import ScoreBoard from './components/ScoreBoard';
 import Timer from './components/Timer';
 import LevelProgress from './components/LevelProgress';
 import AuthModal from './components/AuthModal';
-import UserProfileView from './components/UserProfile';
-import ArcadeHub from './components/ArcadeHub';
-import GachaSystem from './components/GachaSystem';
-import StoryMode from './components/StoryMode';
-import { MemoryGame, WhackGame, SilhouetteGame, ChatGame, TypingGame } from './components/MiniGames';
 import { playSound, isAudioMuted, toggleAudioMute } from './utils/sound';
+
+const ArcadeHub = lazy(() => import('./components/ArcadeHub'));
+const GameSettings = lazy(() => import('./components/GameSettings'));
+const UserProfileView = lazy(() => import('./components/UserProfile'));
+const GachaSystem = lazy(() => import('./components/GachaSystem'));
+const StoryMode = lazy(() => import('./components/StoryMode'));
+const ScoreBoard = lazy(() => import('./components/ScoreBoard'));
+const MemoryGame = lazy(() => import('./components/MiniGames').then(m => ({ default: m.MemoryGame })));
+const WhackGame = lazy(() => import('./components/MiniGames').then(m => ({ default: m.WhackGame })));
+const SilhouetteGame = lazy(() => import('./components/MiniGames').then(m => ({ default: m.SilhouetteGame })));
+const ChatGame = lazy(() => import('./components/MiniGames').then(m => ({ default: m.ChatGame })));
+const TypingGame = lazy(() => import('./components/MiniGames').then(m => ({ default: m.TypingGame })));
 
 // Constants
 const QUESTION_TIMER_SECONDS = 15;
@@ -474,14 +480,16 @@ export default function App() {
   if (view === 'arcade') {
     return (
       <div className={`min-h-screen bg-anime-dark text-white ${fontClass} ${direction === 'rtl' ? 'rtl' : 'ltr'} p-4`}>
-         <ArcadeHub 
-           onSelectPreset={handleArcadePreset} 
-           onSelectMiniGame={(game) => {
-             setView(game);
-             playSound('click');
-           }}
-           onBack={() => setView('home')} 
-         />
+         <Suspense fallback={<LoadingSpinner />}>
+           <ArcadeHub
+             onSelectPreset={handleArcadePreset}
+             onSelectMiniGame={(game) => {
+               setView(game);
+               playSound('click');
+             }}
+             onBack={() => setView('home')}
+           />
+         </Suspense>
       </div>
     );
   }
@@ -489,11 +497,13 @@ export default function App() {
   if (['memory', 'whack', 'silhouette', 'chat', 'typing'].includes(view)) {
     return (
       <div className={`min-h-screen bg-anime-dark text-white ${fontClass} ${direction === 'rtl' ? 'rtl' : 'ltr'} p-4 flex items-center justify-center`}>
-         {view === 'memory' && <MemoryGame onExit={() => setView('arcade')} />}
-         {view === 'whack' && <WhackGame onExit={() => setView('arcade')} />}
-         {view === 'silhouette' && <SilhouetteGame onExit={() => setView('arcade')} />}
-         {view === 'chat' && <ChatGame onExit={() => setView('arcade')} />}
-         {view === 'typing' && <TypingGame onExit={() => setView('arcade')} />}
+         <Suspense fallback={<LoadingSpinner />}>
+           {view === 'memory' && <MemoryGame onExit={() => setView('arcade')} />}
+           {view === 'whack' && <WhackGame onExit={() => setView('arcade')} />}
+           {view === 'silhouette' && <SilhouetteGame onExit={() => setView('arcade')} />}
+           {view === 'chat' && <ChatGame onExit={() => setView('arcade')} />}
+           {view === 'typing' && <TypingGame onExit={() => setView('arcade')} />}
+         </Suspense>
       </div>
     );
   }
@@ -501,7 +511,9 @@ export default function App() {
   if (view === 'story') {
     return (
       <div className={`min-h-screen bg-anime-dark text-white ${fontClass} ${direction === 'rtl' ? 'rtl' : 'ltr'}`}>
-         <StoryMode onClose={() => setView('arcade')} />
+         <Suspense fallback={<LoadingSpinner />}>
+           <StoryMode onClose={() => setView('arcade')} />
+         </Suspense>
       </div>
     );
   }
@@ -561,7 +573,9 @@ export default function App() {
   if (state.status === 'completed') {
     return (
       <div className={`min-h-screen bg-anime-dark text-white ${fontClass} ${direction === 'rtl' ? 'rtl' : 'ltr'} flex items-center justify-center`}>
-        <ScoreBoard state={state} onRestart={restartGame} onSaveStats={handleSaveStats} />
+        <Suspense fallback={<LoadingSpinner />}>
+          <ScoreBoard state={state} onRestart={restartGame} onSaveStats={handleSaveStats} />
+        </Suspense>
       </div>
     );
   }
@@ -707,20 +721,22 @@ export default function App() {
       {(view === 'single_setup' || view === 'room_setup') && (
          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
              <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
-                <GameSettings
-                  settings={state.settings}
-                  onChange={(settings) => setState(prev => ({ ...prev, settings }))}
-                  isRoomSetup={view === 'room_setup'}
-                  playerName={playerName}
-                  onPlayerNameChange={setPlayerName}
-                  hostApiKey={hostApiKey}
-                  onHostApiKeyChange={setHostApiKey}
-                  searchInput={searchInput}
-                  onSearchInputChange={setSearchInput}
-                  onCreateRoom={handleCreateRoom}
-                  onStartSinglePlayer={startGameSinglePlayer}
-                  onCancel={() => setView('home')}
-                />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <GameSettings
+                    settings={state.settings}
+                    onChange={(settings) => setState(prev => ({ ...prev, settings }))}
+                    isRoomSetup={view === 'room_setup'}
+                    playerName={playerName}
+                    onPlayerNameChange={setPlayerName}
+                    hostApiKey={hostApiKey}
+                    onHostApiKeyChange={setHostApiKey}
+                    searchInput={searchInput}
+                    onSearchInputChange={setSearchInput}
+                    onCreateRoom={handleCreateRoom}
+                    onStartSinglePlayer={startGameSinglePlayer}
+                    onCancel={() => setView('home')}
+                  />
+                </Suspense>
              </div>
          </div>
       )}
@@ -746,8 +762,16 @@ export default function App() {
 
       {/* Modals */}
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onLoginSuccess={(u) => { setUser(u); setShowAuthModal(false); }} />}
-      {showProfile && userProfile && <UserProfileView profile={userProfile} onClose={() => setShowProfile(false)} onLogout={() => { logout(); setShowProfile(false); setUser(null); }} />}
-      {showGacha && userProfile && <GachaSystem user={userProfile} onClose={() => setShowGacha(false)} />}
+      {showProfile && userProfile && (
+        <Suspense fallback={<LoadingSpinner />}>
+          <UserProfileView profile={userProfile} onClose={() => setShowProfile(false)} onLogout={() => { logout(); setShowProfile(false); setUser(null); }} />
+        </Suspense>
+      )}
+      {showGacha && userProfile && (
+        <Suspense fallback={<LoadingSpinner />}>
+          <GachaSystem user={userProfile} onClose={() => setShowGacha(false)} />
+        </Suspense>
+      )}
     </div>
   );
 }
