@@ -6,6 +6,7 @@ import { createChatSession } from '../services/geminiService';
 import { Chat, GenerateContentResponse } from '@google/genai';
 import Button from './Button';
 import { playSound } from '../utils/sound';
+import { Lightbulb, Trophy, Heart } from 'lucide-react';
 
 // --- Silhouette Game ---
 
@@ -193,9 +194,10 @@ export const SilhouetteGame: React.FC<{ onExit: () => void }> = ({ onExit }) => 
                      <button 
                        onClick={handleHint} 
                        disabled={brightness >= 40}
-                       className="bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-300 text-xs px-2 py-1 rounded border border-yellow-500/50 transition-colors disabled:opacity-50"
+                       className="bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-300 text-xs px-2 py-1 rounded border border-yellow-500/50 transition-colors disabled:opacity-50 flex items-center gap-1 cursor-pointer"
                      >
-                       💡 Hint
+                       <Lightbulb className="w-3.5 h-3.5" />
+                       <span>Hint</span>
                      </button>
                   </div>
                )}
@@ -357,7 +359,10 @@ export const MemoryGame: React.FC<{ onExit: () => void }> = ({ onExit }) => {
         </div>
       ) : isWin ? (
         <div className="text-center py-12">
-           <h3 className="text-4xl mb-4">You Won! 🎉</h3>
+           <div className="flex items-center justify-center gap-3 mb-4">
+             <Trophy className="w-10 h-10 text-yellow-400 animate-bounce" />
+             <h3 className="text-4xl">You Won!</h3>
+           </div>
            <div className="flex gap-4 justify-center">
              <Button onClick={startNewGame}>Play Again</Button>
              <Button variant="secondary" onClick={onExit}>Exit</Button>
@@ -765,7 +770,12 @@ export const TypingGame: React.FC<{ onExit: () => void }> = ({ onExit }) => {
        {/* Game Area */}
        <div className="w-full flex-1 relative bg-gray-900/50 border-x border-white/10">
           {/* Lives & Score */}
-          <div className="absolute top-4 left-4 text-red-400 font-bold">HP: {'♥'.repeat(lives)}</div>
+          <div className="absolute top-4 left-4 text-red-400 font-bold flex items-center gap-1">
+            <span className="mr-1">HP:</span>
+            {Array.from({ length: Math.max(0, lives) }).map((_, i) => (
+              <Heart key={i} className="w-4 h-4 fill-red-500 text-red-500 inline" />
+            ))}
+          </div>
           <div className="absolute top-4 right-4 text-white font-mono text-xl">PTS: {score}</div>
           
           {/* Falling Words */}

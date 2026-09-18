@@ -22,12 +22,12 @@ const RANKS = [
 ];
 
 export const ACHIEVEMENTS: Achievement[] = [
-  { id: 'first_blood', title: 'First Blood', description: 'Play your first game.', icon: '⚔️' },
-  { id: 'sharpshooter', title: 'Sharpshooter', description: 'Get 100% correct in a game.', icon: '🎯' },
-  { id: 'survivor', title: 'Survivor', description: 'Score 10+ in Survival Mode.', icon: '🛡️' },
-  { id: 'speedster', title: 'Speedster', description: 'Score 10+ in Time Attack Mode.', icon: '⚡' },
-  { id: 'otaku', title: 'True Otaku', description: 'Reach Level 10.', icon: '👓' },
-  { id: 'veteran', title: 'Veteran', description: 'Play 50 games.', icon: '🎖️' },
+  { id: 'first_blood', title: 'First Blood', description: 'Play your first game.', icon: 'swords' },
+  { id: 'sharpshooter', title: 'Sharpshooter', description: 'Get 100% correct in a game.', icon: 'target' },
+  { id: 'survivor', title: 'Survivor', description: 'Score 10+ in Survival Mode.', icon: 'shield' },
+  { id: 'speedster', title: 'Speedster', description: 'Score 10+ in Time Attack Mode.', icon: 'zap' },
+  { id: 'otaku', title: 'True Otaku', description: 'Reach Level 10.', icon: 'glasses' },
+  { id: 'veteran', title: 'Veteran', description: 'Play 50 games.', icon: 'award' },
 ];
 
 const XP_STORAGE_KEY = 'aniquiz_user_xp';

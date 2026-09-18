@@ -3,13 +3,41 @@ import { AnimeData, QuizQuestion, QuizSettings, QuestionType, Language, AIPerson
 import { cleanDescription } from './aniListService';
 import { searchYouTubeVideo } from './youtubeService';
 
-const MODEL_NAME = 'gemini-2.5-flash';
+const CANDIDATE_MODELS = ['gemini-2.5-flash', 'gemini-3.8-flash', 'gemini-flash-latest'];
+
+async function generateWithFallback(ai: GoogleGenAI, params: any) {
+  let lastError: any = null;
+  for (const model of CANDIDATE_MODELS) {
+    try {
+      const res = await ai.models.generateContent({
+        ...params,
+        model,
+      });
+      if (res && res.text) return res;
+    } catch (e: any) {
+      console.warn(`Model ${model} unavailable or error, trying fallback...`, e.message || e);
+      lastError = e;
+    }
+  }
+  throw lastError || new Error("All Gemini models failed to generate content.");
+}
 
 // --- Helper: Decode HTML Entities for OpenTDB ---
 const decodeHtml = (html: string) => {
-  const txt = document.createElement("textarea");
-  txt.innerHTML = html;
-  return txt.value;
+  if (!html) return '';
+  if (typeof document !== 'undefined') {
+    const txt = document.createElement("textarea");
+    txt.innerHTML = html;
+    return txt.value;
+  }
+  return html
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'")
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&eacute;/g, 'é')
+    .replace(/&rsquo;/g, "'");
 };
 
 // --- OpenTDB Integration ---
@@ -197,8 +225,7 @@ const generateGeminiBatch = async (
   `;
 
   try {
-    const response = await ai.models.generateContent({
-      model: MODEL_NAME,
+    const response = await generateWithFallback(ai, {
       contents: prompt,
       config: {
         responseMimeType: "application/json",
@@ -246,22 +273,35 @@ const generateGeminiBatch = async (
     const processedQuestions = await Promise.all(rawQuestions.map(async (q: any) => {
         // Handle Video Questions (OP/ED or Voice Actor)
         if (q.type === QuestionType.OP_ED_GUESS || q.type === QuestionType.VOICE_ACTOR_GUESS) {
-            if (!q.mediaQuery) return null;
-            const videoId = await searchYouTubeVideo(q.mediaQuery);
-            if (!videoId) return null; // Filter out if video not found (API quota or error)
-            return { ...q, videoId };
+            if (q.mediaQuery) {
+                const videoId = await searchYouTubeVideo(q.mediaQuery);
+                if (videoId) {
+                    return { ...q, videoId };
+                }
+            }
+            // If video could not be fetched (API quota or error), convert gracefully to Multiple Choice trivia
+            return {
+                ...q,
+                type: QuestionType.MULTIPLE_CHOICE,
+            };
         }
         
         // Handle Image Questions
         if (q.type === QuestionType.IMAGE_GUESS) {
-           if (!q.imageUrl) return null; // Filter out if no image URL
+           if (!q.imageUrl) {
+               // Convert to multiple choice instead of dropping
+               return {
+                   ...q,
+                   type: QuestionType.MULTIPLE_CHOICE,
+               };
+           }
            return q;
         }
 
         return q;
     }));
     
-    return processedQuestions.filter(q => q !== null);
+    return processedQuestions.filter((q): q is QuizQuestion => q !== null);
 
   } catch (error: any) {
     console.error("Gemini Generation Error:", error);
@@ -275,7 +315,7 @@ export const generateQuizQuestions = async (
   customApiKey?: string
 ): Promise<QuizQuestion[]> => {
   
-  const apiKey = customApiKey || process.env.API_KEY;
+  const apiKey = customApiKey || process.env.GEMINI_API_KEY || process.env.API_KEY;
   if (!apiKey) {
     throw new Error("API Key is missing. Please provide a valid Gemini API Key.");
   }
@@ -341,7 +381,7 @@ export const generateStoryNode = async (
   lang: Language = Language.ENGLISH
 ): Promise<StoryNode> => {
     
-    const apiKey = process.env.API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
     if (!apiKey) throw new Error("API Key missing");
     const ai = new GoogleGenAI({ apiKey });
 
@@ -362,8 +402,7 @@ export const generateStoryNode = async (
       'backgroundPrompt' should be a descriptive prompt to generate or find an image for the scene (e.g., "Cyberpunk city street at night, neon lights, anime style").
     `;
 
-    const response = await ai.models.generateContent({
-      model: MODEL_NAME,
+    const response = await generateWithFallback(ai, {
       contents: prompt,
       config: {
         systemInstruction,
@@ -387,7 +426,7 @@ export const generateStoryNode = async (
 // --- Chat Mode ---
 
 export const createChatSession = (characterName: string, trait: string) => {
-  const apiKey = process.env.API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
   if (!apiKey) throw new Error("API Key missing");
   const ai = new GoogleGenAI({ apiKey });
   
@@ -398,7 +437,7 @@ export const createChatSession = (characterName: string, trait: string) => {
   If the user says something weird, react as the character would.`;
 
   return ai.chats.create({
-    model: MODEL_NAME,
+    model: 'gemini-2.5-flash',
     config: { systemInstruction }
   });
 };

@@ -25,6 +25,8 @@ import Timer from './components/Timer';
 import LevelProgress from './components/LevelProgress';
 import AuthModal from './components/AuthModal';
 import { playSound, isAudioMuted, toggleAudioMute } from './utils/sound';
+import { Copy, Crown, Volume2, VolumeX, Gamepad2, Sparkles, X, Languages } from 'lucide-react';
+import { t } from './services/i18n';
 
 const ArcadeHub = lazy(() => import('./components/ArcadeHub'));
 const GameSettings = lazy(() => import('./components/GameSettings'));
@@ -95,9 +97,43 @@ export default function App() {
   // Auth & Profile State
   const [user, setUser] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [guestProfile, setGuestProfile] = useState<UserProfile>(() => {
+    try {
+      const stored = localStorage.getItem('aniquiz_guest_profile');
+      if (stored) {
+        return {
+          uid: 'guest',
+          displayName: 'Guest Otaku',
+          email: '',
+          photoURL: '',
+          xp: 0,
+          gamesPlayed: 0,
+          achievements: [],
+          matchHistory: [],
+          inventory: [],
+          lastGachaDate: 0,
+          ...JSON.parse(stored)
+        };
+      }
+    } catch (e) {}
+    return {
+      uid: 'guest',
+      displayName: 'Guest Otaku',
+      email: '',
+      photoURL: '',
+      xp: 0,
+      gamesPlayed: 0,
+      achievements: [],
+      matchHistory: [],
+      inventory: [],
+      lastGachaDate: 0
+    };
+  });
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showGacha, setShowGacha] = useState(false);
+
+  const activeProfile = userProfile || guestProfile;
 
   // Audio State
   const [isMuted, setIsMuted] = useState(isAudioMuted());
@@ -215,8 +251,8 @@ export default function App() {
   };
 
   const handleCreateRoom = async () => {
-    if (!playerName.trim() || !hostApiKey.trim()) {
-      alert("Please enter your name and Gemini API Key.");
+    if (!playerName.trim()) {
+      alert("Please enter your name.");
       return;
     }
     
@@ -255,17 +291,18 @@ export default function App() {
   const handleStartRoomGame = async () => {
     if (!room) return;
     
-    // Generate questions using Host's API Key
+    // Generate questions using Host's API Key or fallback
     setState(prev => ({ ...prev, status: 'loading' }));
     try {
+       const effectiveKey = hostApiKey.trim() || process.env.GEMINI_API_KEY || process.env.API_KEY || '';
        // Fetch Data
        const mediaData = await fetchMediaData({
           ...state.settings,
           searchQuery: state.settings.searchQuery || searchInput
        });
        
-       // Generate Questions with CUSTOM KEY
-       const questions = await generateQuizQuestions(mediaData, state.settings, hostApiKey);
+       // Generate Questions with Key
+       const questions = await generateQuizQuestions(mediaData, state.settings, effectiveKey);
        
        // Push to Firebase
        await startRoomGame(room.id, questions);
@@ -275,7 +312,7 @@ export default function App() {
     }
   };
 
-  const startGameSinglePlayer = async () => {
+  const startGameSinglePlayer = async (customSettings?: QuizSettings, customSearch?: string) => {
     // If questions pre-loaded (Challenge Link)
     if (state.questions && state.questions.length > 0 && state.status !== 'playing') {
        playSound('start');
@@ -291,7 +328,10 @@ export default function App() {
        return;
     }
 
-    if (state.settings.contentType === ContentType.SPECIFIC && !searchInput.trim()) {
+    const activeSettings = customSettings || state.settings;
+    const effectiveSearch = customSearch !== undefined ? customSearch : (activeSettings.searchQuery || searchInput);
+
+    if (activeSettings.contentType === ContentType.SPECIFIC && !effectiveSearch.trim()) {
       setState(prev => ({ ...prev, error: "Please enter an anime name." }));
       return;
     }
@@ -301,26 +341,26 @@ export default function App() {
       ...prev, 
       status: 'loading', 
       error: undefined,
-      settings: { ...prev.settings, searchQuery: searchInput },
+      settings: { ...activeSettings, searchQuery: effectiveSearch },
       themeImage: undefined
     }));
     
     try {
-      const mediaData = await fetchMediaData({ ...state.settings, searchQuery: searchInput });
+      const mediaData = await fetchMediaData({ ...activeSettings, searchQuery: effectiveSearch });
 
       let themeImage = undefined;
-      if (state.settings.contentType === ContentType.SPECIFIC && mediaData.length > 0) {
+      if (activeSettings.contentType === ContentType.SPECIFIC && mediaData.length > 0) {
         themeImage = mediaData[0].bannerImage || mediaData[0].coverImage?.large;
       }
 
       let questions: any[] = [];
       let retries = 3;
       let lastErr: any;
+      const effectiveKey = hostApiKey.trim() || process.env.GEMINI_API_KEY || process.env.API_KEY || '';
 
       while (retries > 0 && questions.length === 0) {
           try {
-             // Use the hostApiKey state (which defaults to env var)
-             questions = await generateQuizQuestions(mediaData, state.settings, hostApiKey);
+             questions = await generateQuizQuestions(mediaData, activeSettings, effectiveKey);
              if (questions.length === 0) {
                 throw new Error("Generation returned empty. Retrying...");
              }
@@ -356,8 +396,7 @@ export default function App() {
   // --- Arcade Handlers ---
   const handleArcadePreset = (presetSettings: QuizSettings) => {
     setState(prev => ({ ...prev, settings: presetSettings }));
-    // Immediately start loading for this preset
-    setTimeout(() => startGameSinglePlayer(), 100);
+    startGameSinglePlayer(presetSettings, presetSettings.searchQuery || '');
   };
 
   // --- Timer ---
@@ -441,6 +480,27 @@ export default function App() {
         }
 
         await saveGameResultToProfile(user.uid, record, newUnlocks);
+     } else {
+        // Save to guest profile
+        const newUnlocks = checkNewAchievements(
+          guestProfile,
+          record.score,
+          record.totalQuestions,
+          record.mode
+        );
+        setGuestProfile(prev => {
+           const updated: UserProfile = {
+              ...prev,
+              xp: prev.xp + record.xpEarned,
+              gamesPlayed: prev.gamesPlayed + 1,
+              achievements: Array.from(new Set([...prev.achievements, ...newUnlocks])),
+              matchHistory: [...(prev.matchHistory || []), record]
+           };
+           try {
+              localStorage.setItem('aniquiz_guest_profile', JSON.stringify(updated));
+           } catch (e) {}
+           return updated;
+        });
      }
   };
 
@@ -458,6 +518,25 @@ export default function App() {
   const fontClass = isArabic ? 'font-arabic' : 'font-sans';
   const direction = isArabic ? 'rtl' : 'ltr';
 
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.dir = direction;
+      document.documentElement.lang = isArabic ? 'ar' : 'en';
+    }
+  }, [direction, isArabic]);
+
+  const toggleLanguage = () => {
+    const nextLang = state.settings.language === Language.ENGLISH ? Language.ARABIC : Language.ENGLISH;
+    setState(prev => ({
+      ...prev,
+      settings: {
+        ...prev.settings,
+        language: nextLang
+      }
+    }));
+    playSound('click');
+  };
+
   // --- Render Components ---
 
   // Main Render
@@ -468,7 +547,9 @@ export default function App() {
         {view === 'game' || view === 'single_setup' ? (
           <div className="w-full max-w-2xl px-4">
             <QuestionSkeleton />
-            <p className="text-center mt-4 text-gray-400 animate-pulse">Summoning Questions...</p>
+            <p className="text-center mt-4 text-gray-400 animate-pulse">
+              {isArabic ? 'جاري تحضير الأسئلة...' : 'Summoning Questions...'}
+            </p>
           </div>
         ) : (
           <LoadingSpinner />
@@ -488,6 +569,7 @@ export default function App() {
                playSound('click');
              }}
              onBack={() => setView('home')}
+             language={state.settings.language}
            />
          </Suspense>
       </div>
@@ -520,34 +602,50 @@ export default function App() {
 
   if (view === 'lobby' && room) {
      const isHost = room.hostId === playerId;
+     const players = room.players || [];
+     const currentLang = state.settings.language;
      return (
         <div className={`min-h-screen bg-anime-dark text-white ${fontClass} ${direction === 'rtl' ? 'rtl' : 'ltr'} flex items-center justify-center p-4`}>
-           <div className="glass-panel p-8 rounded-3xl max-w-lg w-full text-center space-y-6">
-              <h2 className="text-3xl font-bold mb-2">Lobby</h2>
+           <div className="glass-panel p-8 rounded-3xl max-w-lg w-full text-center space-y-6 animate-fade-in">
+              <h2 className="text-3xl font-bold mb-2">{t('lobby', currentLang)}</h2>
               <div className="bg-white/10 p-4 rounded-xl mb-4">
-                 <p className="text-xs uppercase text-gray-400 tracking-widest">Room Code</p>
+                 <p className="text-xs uppercase text-gray-400 tracking-widest mb-1">{t('roomCodeLabel', currentLang)}</p>
                  <p className="text-4xl font-mono font-black text-anime-primary tracking-widest">{room.code}</p>
+                 <button
+                    onClick={() => {
+                       navigator.clipboard?.writeText(room.code);
+                       alert(t('copied', currentLang));
+                    }}
+                    className="mt-2 text-xs text-anime-accent hover:underline inline-flex items-center gap-1.5 cursor-pointer"
+                 >
+                    <Copy className="w-3.5 h-3.5" />
+                    <span>{t('copyCode', currentLang)}</span>
+                 </button>
               </div>
 
               <div className="space-y-2 text-left">
-                 <p className="text-sm font-bold text-gray-400">Players ({room.players.length})</p>
-                 {room.players.map(p => (
+                 <p className="text-sm font-bold text-gray-400">{t('players', currentLang)} ({players.length})</p>
+                 {players.map(p => (
                     <div key={p.id} className="flex items-center gap-2 bg-black/20 p-3 rounded-lg">
                        <div className="w-8 h-8 rounded-full bg-anime-secondary flex items-center justify-center text-xs font-bold">
                           {p.name.charAt(0)}
                        </div>
-                       <span>{p.name} {p.isHost && '👑'}</span>
+                       <span className="text-sm flex items-center gap-1">
+                          {p.name}
+                          {p.isHost && <Crown className="w-4 h-4 text-yellow-400 inline" />}
+                       </span>
                     </div>
                  ))}
               </div>
 
-              {isHost ? (
-                <div className="pt-4 border-t border-white/10">
-                   <Button fullWidth onClick={handleStartRoomGame} className="animate-pulse">Start Game</Button>
-                </div>
-              ) : (
-                <p className="text-sm text-gray-400 animate-pulse">Waiting for host to start...</p>
-              )}
+              <div className="pt-4 border-t border-white/10 space-y-3">
+                 {isHost ? (
+                    <Button fullWidth onClick={handleStartRoomGame} className="animate-pulse">{t('startGame', currentLang)}</Button>
+                 ) : (
+                    <p className="text-sm text-gray-400 animate-pulse">{t('waitingHost', currentLang)}</p>
+                 )}
+                 <Button fullWidth variant="ghost" onClick={() => { setRoom(null); setView('home'); }}>{t('leaveRoom', currentLang)}</Button>
+              </div>
            </div>
         </div>
      );
@@ -597,12 +695,13 @@ export default function App() {
       >
         <div className="w-full max-w-4xl flex justify-between items-center py-4 mb-4">
            <Button variant="ghost" aria-label="Exit game" onClick={() => {
-              if (confirm("Exit game? Progress will be lost.")) restartGame();
-           }}>
-             ✕ Exit
+              if (confirm(isArabic ? "هل تريد الخروج؟ ستفقد تقدمك الحالي." : "Exit game? Progress will be lost.")) restartGame();
+           }} className="inline-flex items-center gap-1.5">
+             <X className="w-4 h-4" />
+             <span>{t('exit', state.settings.language)}</span>
            </Button>
            <div className={`text-2xl font-bold transition-transform ${scoreBump ? 'scale-125 text-green-400' : ''}`}>
-             Score: {state.score}
+             {t('score', state.settings.language)}: {state.score}
            </div>
         </div>
 
@@ -628,7 +727,7 @@ export default function App() {
         {isAnswerRevealed && (
           <div className="fixed bottom-8 animate-fade-in-up z-20">
             <Button onClick={nextQuestion} className="px-12 py-4 text-lg shadow-xl shadow-anime-primary/20">
-              {state.currentIndex < state.questions.length - 1 ? (isArabic ? 'السؤال التالي' : 'Next Question') : (isArabic ? 'إنهاء' : 'Finish')}
+              {state.currentIndex < state.questions.length - 1 ? t('nextQuestion', state.settings.language) : t('finishQuiz', state.settings.language)}
             </Button>
           </div>
         )}
@@ -637,27 +736,39 @@ export default function App() {
   }
 
   // Fallback: Home View
+  const homeLang = state.settings.language;
+
   return (
     <div className={`min-h-screen bg-anime-dark text-white ${fontClass} ${direction === 'rtl' ? 'rtl' : 'ltr'} overflow-x-hidden`}>
       
       {/* Top Nav */}
       <nav className="p-6 flex justify-between items-center max-w-7xl mx-auto">
          <h1 className="text-2xl font-black tracking-tighter italic bg-clip-text text-transparent bg-gradient-to-r from-anime-primary to-anime-accent cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white rounded" onClick={() => setView('home')} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setView('home'); } }}>
-            ANIQUIZ<span className="text-white">AI</span>
+            {t('appTitle', homeLang)}<span className="text-white">{t('appSubtitle', homeLang)}</span>
          </h1>
-         <div className="flex gap-4 items-center">
+         <div className="flex gap-3 items-center">
+            <button
+               onClick={toggleLanguage}
+               className="px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-xs font-semibold flex items-center gap-1.5 transition-colors border border-white/10 cursor-pointer text-gray-200"
+               aria-label="Toggle language"
+               title={isArabic ? 'Switch to English' : 'التبديل إلى العربية'}
+            >
+               <Languages className="w-3.5 h-3.5 text-anime-primary" />
+               <span>{isArabic ? 'English' : 'العربية'}</span>
+            </button>
             <button
                onClick={() => setIsMuted(toggleAudioMute())}
-               className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
-               aria-label={isMuted ? "Unmute audio" : "Mute audio"}
+               className="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white cursor-pointer"
+               aria-label={isMuted ? t('unmute', homeLang) : t('mute', homeLang)}
+               title={isMuted ? t('unmute', homeLang) : t('mute', homeLang)}
             >
-               {isMuted ? '🔇' : '🔊'}
+               {isMuted ? <VolumeX className="w-5 h-5 text-gray-400" /> : <Volume2 className="w-5 h-5 text-anime-accent" />}
             </button>
             {user ? (
                <div className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => setShowProfile(true)} role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setShowProfile(true); } }}>
                   <div className="text-right hidden md:block">
                      <div className="text-sm font-bold">{user.displayName}</div>
-                     <div className="text-xs text-anime-secondary">LVL {userProfile?.level || 1}</div>
+                     <div className="text-xs text-anime-secondary">{t('level', homeLang)} {userProfile?.level || 1}</div>
                   </div>
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-anime-primary to-anime-secondary p-0.5">
                      {user.photoURL ? (
@@ -670,7 +781,12 @@ export default function App() {
                   </div>
                </div>
             ) : (
-               <Button variant="outline" onClick={() => setShowAuthModal(true)} className="!py-2">Login</Button>
+               <div className="flex items-center gap-2">
+                  <Button variant="ghost" onClick={() => setShowProfile(true)} className="!py-2 text-xs text-gray-300">
+                     {t('collection', homeLang)} ({guestProfile.inventory?.length || 0})
+                  </Button>
+                  <Button variant="outline" onClick={() => setShowAuthModal(true)} className="!py-2">{t('login', homeLang)}</Button>
+               </div>
             )}
          </div>
       </nav>
@@ -681,38 +797,39 @@ export default function App() {
          <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-anime-accent/20 rounded-full blur-[100px] pointer-events-none"></div>
 
          <div className="mb-4 inline-block px-4 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-bold tracking-widest text-anime-secondary animate-fade-in">
-            POWERED BY GEMINI AI
+            {t('heroBadge', homeLang)}
          </div>
          
          <h1 className="text-5xl md:text-7xl font-black mb-6 leading-tight animate-fade-in-up">
-            TEST YOUR <br/>
+            {t('heroTitle1', homeLang)} <br/>
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-anime-primary via-anime-secondary to-anime-accent animate-shimmer bg-[length:200%_auto]">
-               ANIME KNOWLEDGE
+               {t('heroTitle2', homeLang)}
             </span>
          </h1>
          
          <p className="max-w-xl text-gray-400 text-lg mb-10 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
-            Challenge yourself with infinite AI-generated quizzes from your favorite series. 
-            Rank up, unlock achievements, and prove you are the ultimate Otaku.
+            {t('heroSubtitle', homeLang)}
          </p>
 
          <div className="flex flex-col md:flex-row gap-4 w-full max-w-md animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
             <Button fullWidth className="text-lg py-4" onClick={() => setView('single_setup')}>
-               Solo Challenge
+               {t('soloChallenge', homeLang)}
             </Button>
-            <Button fullWidth variant="secondary" className="text-lg py-4" onClick={() => setView('arcade')}>
-               Arcade Zone 🕹️
+            <Button fullWidth variant="secondary" className="text-lg py-4 flex items-center justify-center gap-2" onClick={() => setView('arcade')}>
+               <Gamepad2 className="w-5 h-5" />
+               <span>{t('arcadeZone', homeLang)}</span>
             </Button>
          </div>
          
          <div className="mt-4 flex gap-4 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
-            <Button variant="ghost" className="text-sm" onClick={() => setView('room_setup')}>Create Room</Button>
-            <Button variant="ghost" className="text-sm" onClick={() => setView('join_room')}>Join Room</Button>
+            <Button variant="ghost" className="text-sm" onClick={() => setView('room_setup')}>{t('createRoom', homeLang)}</Button>
+            <Button variant="ghost" className="text-sm" onClick={() => setView('join_room')}>{t('joinRoom', homeLang)}</Button>
          </div>
          
          <div className="mt-8 animate-fade-in-up" style={{ animationDelay: '0.6s' }}>
-             <Button variant="outline" className="text-sm border-yellow-500 text-yellow-500 hover:bg-yellow-500/10" onClick={() => setShowGacha(true)}>
-                🎁 Daily Gacha Summon
+             <Button variant="outline" className="text-sm border-yellow-500 text-yellow-500 hover:bg-yellow-500/10 flex items-center gap-2" onClick={() => setShowGacha(true)}>
+                <Sparkles className="w-4 h-4 text-yellow-400" />
+                <span>{t('dailyGacha', homeLang)}</span>
              </Button>
          </div>
       </div>
@@ -745,12 +862,12 @@ export default function App() {
       {view === 'join_room' && (
          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
             <div className="glass-panel p-8 rounded-2xl max-w-sm w-full space-y-4">
-               <h2 className="text-2xl font-bold mb-4">Join Party</h2>
-               <input type="text" aria-label="Your Name" placeholder="Your Name" value={playerName} onChange={e => setPlayerName(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3" />
-               <input type="text" aria-label="Room Code" placeholder="Room Code (e.g. A1B2C3)" value={roomCodeInput} onChange={e => setRoomCodeInput(e.target.value.toUpperCase())} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 font-mono tracking-widest uppercase" maxLength={6} />
+               <h2 className="text-2xl font-bold mb-4">{t('joinParty', homeLang)}</h2>
+               <input type="text" aria-label="Your Name" placeholder={t('yourName', homeLang)} value={playerName} onChange={e => setPlayerName(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white" />
+               <input type="text" aria-label="Room Code" placeholder={t('roomCode', homeLang)} value={roomCodeInput} onChange={e => setRoomCodeInput(e.target.value.toUpperCase())} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 font-mono tracking-widest uppercase text-white" maxLength={6} />
                {state.error && <p className="text-red-400 text-sm">{state.error}</p>}
-               <Button fullWidth onClick={handleJoinRoom}>Enter Room</Button>
-               <Button fullWidth variant="ghost" onClick={() => { setView('home'); setState(p => ({...p, error: undefined})); }}>Cancel</Button>
+               <Button fullWidth onClick={handleJoinRoom}>{t('enterRoom', homeLang)}</Button>
+               <Button fullWidth variant="ghost" onClick={() => { setView('home'); setState(p => ({...p, error: undefined})); }}>{t('cancel', homeLang)}</Button>
             </div>
          </div>
       )}
@@ -762,14 +879,47 @@ export default function App() {
 
       {/* Modals */}
       {showAuthModal && <AuthModal onClose={() => setShowAuthModal(false)} onLoginSuccess={(u) => { setUser(u); setShowAuthModal(false); }} />}
-      {showProfile && userProfile && (
+      {showProfile && activeProfile && (
         <Suspense fallback={<LoadingSpinner />}>
-          <UserProfileView profile={userProfile} onClose={() => setShowProfile(false)} onLogout={() => { logout(); setShowProfile(false); setUser(null); }} />
+          <UserProfileView 
+            profile={activeProfile} 
+            onClose={() => setShowProfile(false)} 
+            onLogout={() => { 
+              if (user) logout(); 
+              setShowProfile(false); 
+              setUser(null); 
+            }} 
+          />
         </Suspense>
       )}
-      {showGacha && userProfile && (
+      {showGacha && activeProfile && (
         <Suspense fallback={<LoadingSpinner />}>
-          <GachaSystem user={userProfile} onClose={() => setShowGacha(false)} />
+          <GachaSystem 
+            user={activeProfile} 
+            language={state.settings.language}
+            onClose={() => setShowGacha(false)} 
+            onCardPulled={(card) => {
+              if (userProfile) {
+                setUserProfile(prev => prev ? ({
+                  ...prev,
+                  inventory: [...(prev.inventory || []), card],
+                  lastGachaDate: Date.now()
+                }) : null);
+              } else {
+                setGuestProfile(prev => {
+                  const updated = {
+                    ...prev,
+                    inventory: [...(prev.inventory || []), card],
+                    lastGachaDate: Date.now()
+                  };
+                  try {
+                    localStorage.setItem('aniquiz_guest_profile', JSON.stringify(updated));
+                  } catch (e) {}
+                  return updated;
+                });
+              }
+            }}
+          />
         </Suspense>
       )}
     </div>

@@ -165,6 +165,18 @@ export const saveGameResultToProfile = async (uid: string, record: MatchRecord, 
 };
 
 export const saveGachaItem = async (uid: string, item: GachaCard) => {
+  if (uid === 'guest' || !uid) {
+    try {
+      const stored = localStorage.getItem('aniquiz_guest_profile');
+      const profile = stored ? JSON.parse(stored) : { inventory: [], lastGachaDate: 0 };
+      profile.inventory = [...(profile.inventory || []), item];
+      profile.lastGachaDate = Date.now();
+      localStorage.setItem('aniquiz_guest_profile', JSON.stringify(profile));
+    } catch (e) {
+      console.warn("Failed to save local gacha item:", e);
+    }
+    return;
+  }
   try {
     const userRef = doc(db, "users", uid);
     await updateDoc(userRef, {

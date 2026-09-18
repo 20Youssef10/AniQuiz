@@ -7,14 +7,15 @@ export default defineConfig(({ mode }) => {
   // Set the third parameter to '' to load all env regardless of the `VITE_` prefix.
   const env = loadEnv(mode, (process as any).cwd(), '');
   
-  // Use provided default key if env.API_KEY is not set
-  const apiKey = env.API_KEY || "AIzaSyBLs6rZ8nzub0QbK3pfdkwcKCFvZ7w49cs";
+  // Use provided default key if env.GEMINI_API_KEY or env.API_KEY is not set
+  const apiKey = env.GEMINI_API_KEY || env.API_KEY || "AIzaSyBLs6rZ8nzub0QbK3pfdkwcKCFvZ7w49cs";
 
   return {
     plugins: [react()],
     define: {
-      // Polyfill process.env.API_KEY so it works in the browser build
+      // Polyfill process.env.API_KEY and process.env.GEMINI_API_KEY so it works in the browser build
       'process.env.API_KEY': JSON.stringify(apiKey),
+      'process.env.GEMINI_API_KEY': JSON.stringify(apiKey),
     },
     test: {
       globals: true,

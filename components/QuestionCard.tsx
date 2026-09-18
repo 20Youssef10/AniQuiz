@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { QuizQuestion, QuestionType } from '../types';
 import Button from './Button';
 import { playSound } from '../utils/sound';
+import { Mic, CheckCircle2, XCircle, Lightbulb } from 'lucide-react';
 
 interface QuestionCardProps {
   question: QuizQuestion;
@@ -138,8 +139,8 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, selectedAnswer, o
 
                    {!isRevealed && (
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-                         <div className="bg-anime-primary/90 px-6 py-4 rounded-full text-white backdrop-blur-md animate-pulse border border-white/20 shadow-xl">
-                            <span className="text-2xl mr-2">🎙️</span>
+                         <div className="bg-anime-primary/90 px-6 py-4 rounded-full text-white backdrop-blur-md animate-pulse border border-white/20 shadow-xl flex items-center gap-2">
+                            <Mic className="w-6 h-6 text-white" />
                             <span className="font-bold tracking-wider">WHO IS SPEAKING?</span>
                          </div>
                       </div>
@@ -204,10 +205,10 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, selectedAnswer, o
                 </span>
                 <span className="flex-1">{option}</span>
                 {isRevealed && option === question.correctAnswer && (
-                  <span className="text-xl animate-pop">✅</span>
+                  <CheckCircle2 className="w-5 h-5 text-green-400 animate-pop shrink-0 ml-2" />
                 )}
                 {isRevealed && isWrong(option) && (
-                  <span className="text-xl animate-pop">❌</span>
+                  <XCircle className="w-5 h-5 text-red-400 animate-pop shrink-0 ml-2" />
                 )}
               </div>
             </Button>
@@ -218,7 +219,8 @@ const QuestionCard: React.FC<QuestionCardProps> = ({ question, selectedAnswer, o
         {isRevealed && (
           <div className="mt-6 p-4 bg-white/5 rounded-xl border border-white/10 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
             <h4 className="font-bold text-green-400 mb-2 flex items-center gap-2">
-              <span className="text-xl">💡</span> Answer
+              <Lightbulb className="w-4 h-4 text-yellow-400 shrink-0" />
+              <span>Answer</span>
             </h4>
             <p className="text-sm text-gray-200 leading-relaxed">{question.explanation}</p>
           </div>

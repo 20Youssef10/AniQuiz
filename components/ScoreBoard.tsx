@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { QuizState, Language, MatchRecord } from '../types';
+import { QuizState, MatchRecord } from '../types';
 import Button from './Button';
 import { createChallenge } from '../services/firebase';
 import { addXp, getUserStats } from '../services/levelService';
+import { Crown, Swords, Copy } from 'lucide-react';
+import { t } from '../services/i18n';
 
 interface ScoreBoardProps {
   state: QuizState;
@@ -17,8 +19,6 @@ const ScoreBoard: React.FC<ScoreBoardProps> = ({ state, onRestart, onSaveStats }
   
   // Legacy local stats for display if not logged in
   const [localStats, setLocalStats] = useState(getUserStats(state.settings.language));
-
-  const isArabic = state.settings.language === Language.ARABIC;
 
   useEffect(() => {
     // XP Formula
@@ -69,27 +69,37 @@ const ScoreBoard: React.FC<ScoreBoardProps> = ({ state, onRestart, onSaveStats }
   const copyToClipboard = () => {
     if (challengeLink) {
       navigator.clipboard.writeText(challengeLink);
-      alert(isArabic ? "تم نسخ الرابط!" : "Link copied to clipboard!");
+      alert(t('linkCopied', state.settings.language));
     }
   };
 
-  const percentage = Math.round((state.score / state.questions.length) * 100);
+  const totalQuestions = state.questions.length || 1;
+  const percentage = Math.round((state.score / totalQuestions) * 100);
+  const lang = state.settings.language;
   
-  let message = isArabic ? "استمر في المشاهدة!" : "Keep Watching!";
-  if (percentage >= 80) message = isArabic ? "ملك الأوتاكو! 👑" : "Otaku King! 👑";
-  else if (percentage >= 50) message = isArabic ? "متابع جيد!" : "Casual Fan!";
+  let message = t('keepWatching', lang);
+  let showCrown = false;
+  if (percentage >= 80) {
+    message = t('otakuKing', lang);
+    showCrown = true;
+  } else if (percentage >= 50) {
+    message = t('casualFan', lang);
+  }
 
   return (
     <div className="flex flex-col items-center justify-center text-center p-4 animate-fade-in">
       <div className="glass-panel p-8 md:p-12 rounded-3xl shadow-2xl max-w-lg w-full relative overflow-hidden">
         
-        {/* Rank Badge at top right (Visual only) */}
+        {/* Rank Badge at top right */}
         <div className="absolute top-4 right-4 bg-yellow-500/20 text-yellow-500 border border-yellow-500/50 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
            {localStats.title}
         </div>
 
-        <h2 className="text-3xl font-bold text-white mb-2">{message}</h2>
-        <p className="text-gray-400 mb-8">{isArabic ? "اكتمل الاختبار" : "Quiz Completed"}</p>
+        <h2 className="text-3xl font-bold text-white mb-2 flex items-center justify-center gap-2">
+          <span>{message}</span>
+          {showCrown && <Crown className="w-7 h-7 text-yellow-400 inline animate-bounce" />}
+        </h2>
+        <p className="text-gray-400 mb-8">{t('quizCompleted', lang)}</p>
 
         <div className="mb-6 relative">
           <svg className="w-40 h-40 mx-auto" viewBox="0 0 36 36">
@@ -118,27 +128,35 @@ const ScoreBoard: React.FC<ScoreBoardProps> = ({ state, onRestart, onSaveStats }
 
         {/* XP Gained Animation */}
         <div className="mb-8 p-4 bg-anime-dark/50 rounded-xl border border-white/10">
-           <div className="text-sm text-gray-400 uppercase tracking-widest mb-1">{isArabic ? "الخبرة المكتسبة" : "XP GAINED"}</div>
+           <div className="text-sm text-gray-400 uppercase tracking-widest mb-1">{t('xpGained', lang)}</div>
            <div className="text-3xl font-extrabold text-green-400 drop-shadow-md">+{earnedXp} XP</div>
         </div>
 
         <div className="space-y-4">
           {!challengeLink ? (
-            <Button onClick={handleCreateChallenge} disabled={isGeneratingLink} fullWidth variant="secondary">
-               {isGeneratingLink ? (isArabic ? "جاري الإنشاء..." : "Creating...") : (isArabic ? "تحدي صديق ⚔️" : "Challenge a Friend ⚔️")}
+            <Button onClick={handleCreateChallenge} disabled={isGeneratingLink} fullWidth variant="secondary" className="flex items-center justify-center gap-2">
+               {isGeneratingLink ? (
+                 <span>{t('creating', lang)}</span>
+               ) : (
+                 <>
+                   <Swords className="w-4 h-4" />
+                   <span>{t('challengeFriend', lang)}</span>
+                 </>
+               )}
             </Button>
           ) : (
             <div className="bg-white/10 p-4 rounded-xl border border-anime-primary animate-fade-in">
-               <p className="text-sm text-gray-300 mb-2">{isArabic ? "شارك هذا الرابط:" : "Share this link:"}</p>
+               <p className="text-sm text-gray-300 mb-2">{t('shareLink', lang)}</p>
                <input readOnly aria-label="Share Link" value={challengeLink} className="w-full bg-black/50 text-white p-2 rounded text-xs mb-2 border border-white/10" />
-               <Button onClick={copyToClipboard} fullWidth variant="primary" className="text-sm py-2">
-                 {isArabic ? "نسخ الرابط" : "Copy Link"}
+               <Button onClick={copyToClipboard} fullWidth variant="primary" className="text-sm py-2 flex items-center justify-center gap-1.5">
+                 <Copy className="w-3.5 h-3.5" />
+                 <span>{t('copyLink', lang)}</span>
                </Button>
             </div>
           )}
 
           <Button onClick={onRestart} fullWidth variant="outline">
-            {isArabic ? "العب مجدداً" : "Play Again"}
+            {t('playAgain', lang)}
           </Button>
         </div>
       </div>
