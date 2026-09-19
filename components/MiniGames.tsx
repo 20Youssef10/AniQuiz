@@ -581,7 +581,7 @@ export const ChatGame: React.FC<{ onExit: () => void }> = ({ onExit }) => {
             <h2 className="text-3xl font-bold mb-6 text-center">Select Character</h2>
             <div className="grid grid-cols-2 gap-4">
                {CHARACTERS.map(char => (
-                 <div key={char.id} onClick={() => startChat(char)} className="glass-panel p-4 rounded-xl cursor-pointer hover:bg-white/10 transition-all flex flex-col items-center gap-3" role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startChat(char); } }}>
+                 <div key={char.id} onClick={() => startChat(char)} className="glass-panel p-4 rounded-xl cursor-pointer hover:bg-white/10 transition-all flex flex-col items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900" role="button" tabIndex={0} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); startChat(char); } }}>
                     <img src={char.avatar} className="w-20 h-20 rounded-full object-cover border-2 border-white/20" alt={char.name} />
                     <h3 className="font-bold text-lg">{char.name}</h3>
                  </div>
