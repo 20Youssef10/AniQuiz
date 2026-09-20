@@ -40,7 +40,14 @@ const LevelProgress: React.FC<LevelProgressProps> = ({ language }) => {
         </div>
       </div>
       
-      <div className="h-3 w-full bg-black/40 rounded-full overflow-hidden border border-white/5 relative">
+      <div
+        className="h-3 w-full bg-black/40 rounded-full overflow-hidden border border-white/5 relative"
+        role="progressbar"
+        aria-valuenow={Math.round(percentage)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={isArabic ? "تقدم المستوى" : "Level Progress"}
+      >
         <div 
           className="h-full bg-gradient-to-r from-anime-primary to-anime-accent shadow-[0_0_10px_rgba(99,102,241,0.5)]"
           style={{ width: `${percentage}%`, transition: 'width 1s ease-out' }}
