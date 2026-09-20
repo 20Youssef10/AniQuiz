@@ -32,3 +32,7 @@
 ## 2025-02-28 - Replaced raw text loading states with LoadingSpinner
 **Learning:** Found inconsistent and unpolished loading states (raw text with simple animation) in `MiniGames.tsx`. Using raw text for loading screens leads to a poor user experience, especially during long network requests.
 **Action:** Always replace unpolished text-based loading states with the `LoadingSpinner` component to provide a consistent, engaging, and visually appealing experience that matches the app's overall theme and keeps users engaged with trivia facts.
+
+## 2023-10-27 - Custom progress bars require ARIA attributes
+**Learning:** Found that custom visual progress bars in `LevelProgress.tsx` and `Timer.tsx` were built using styled `div`s, but they lacked semantic meaning for assistive technologies, effectively hiding this important status information from screen reader users.
+**Action:** Always add `role="progressbar"`, `aria-valuenow`, `aria-valuemin`, and `aria-valuemax` to custom visual progress bars (along with an appropriate `aria-label`) so screen readers can interpret and announce the current progress accurately.

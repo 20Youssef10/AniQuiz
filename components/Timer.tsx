@@ -21,7 +21,14 @@ const Timer: React.FC<TimerProps> = ({ timeLeft, maxTime }) => {
           {timeLeft}s
         </span>
       </div>
-      <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
+      <div
+        className="h-2 w-full bg-white/10 rounded-full overflow-hidden"
+        role="progressbar"
+        aria-valuenow={Math.round(percentage)}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label="Time Left"
+      >
         <div 
           className={`h-full ${colorClass} transition-all duration-1000 ease-linear`}
           style={{ width: `${percentage}%` }}
