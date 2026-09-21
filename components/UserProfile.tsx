@@ -28,7 +28,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ profile, onClose, onL
   return (
     <div className="fixed inset-0 z-[100] bg-anime-dark/95 backdrop-blur-md overflow-y-auto animate-fade-in">
        <div className="max-w-4xl mx-auto p-4 py-12">
-          <button onClick={onClose} aria-label="Close profile" className="fixed top-6 right-6 text-white bg-white/10 hover:bg-white/20 p-2 rounded-full z-50 cursor-pointer">
+          <button onClick={onClose} aria-label="Close profile" className="fixed top-6 right-6 text-white bg-white/10 hover:bg-white/20 p-2 rounded-full z-50 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
             <X className="w-5 h-5" />
           </button>
 

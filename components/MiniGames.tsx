@@ -374,7 +374,10 @@ export const MemoryGame: React.FC<{ onExit: () => void }> = ({ onExit }) => {
             <div 
               key={card.id} 
               onClick={() => handleCardClick(i)}
-              className={`w-20 h-28 md:w-28 md:h-40 rounded-xl cursor-pointer transition-all duration-500 transform [transform-style:preserve-3d] relative ${card.isFlipped ? '[transform:rotateY(180deg)]' : ''}`}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleCardClick(i); } }}
+              className={`w-20 h-28 md:w-28 md:h-40 rounded-xl cursor-pointer transition-all duration-500 transform [transform-style:preserve-3d] relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900 ${card.isFlipped ? '[transform:rotateY(180deg)]' : ''}`}
             >
                {/* Back */}
                <div className={`absolute inset-0 bg-anime-card border-2 border-white/10 rounded-xl flex items-center justify-center [backface-visibility:hidden] z-10 ${card.isFlipped ? 'opacity-0' : 'opacity-100'}`}>
@@ -492,7 +495,10 @@ export const WhackGame: React.FC<{ onExit: () => void }> = ({ onExit }) => {
                 <div 
                   key={i} 
                   onClick={() => gameActive && whack(i)}
-                  className="aspect-square bg-white/5 rounded-full border border-white/10 relative overflow-hidden cursor-pointer active:scale-95 transition-transform"
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); gameActive && whack(i); } }}
+                  className="aspect-square bg-white/5 rounded-full border border-white/10 relative overflow-hidden cursor-pointer active:scale-95 transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
                 >
                    {/* Hole */}
                    <div className="absolute bottom-0 inset-x-2 h-1/3 bg-black/40 rounded-full blur-sm"></div>

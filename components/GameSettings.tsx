@@ -105,7 +105,7 @@ const GameSettings: React.FC<GameSettingsProps> = ({
        {settings.contentType === ContentType.SPECIFIC ? (
           <div>
             <label className="block text-sm font-semibold mb-3 text-gray-300 uppercase tracking-wider">{isArabic ? 'اسم الأنمي' : 'Name'}</label>
-            <input type="text" value={searchInput} onChange={(e) => onSearchInputChange(e.target.value)} aria-label="Search Query" placeholder="e.g. One Piece" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white transition-all focus:border-anime-primary outline-none" />
+            <input type="text" value={searchInput} onChange={(e) => onSearchInputChange(e.target.value)} aria-label="Search Query" placeholder="e.g. One Piece" className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white outline-none" />
           </div>
        ) : (
           <div>
@@ -139,11 +139,11 @@ const GameSettings: React.FC<GameSettingsProps> = ({
          <div className="pt-4 border-t border-white/10 space-y-4">
             <div>
                <label className="block text-sm font-semibold mb-2 text-green-400">Host Name</label>
-               <input type="text" aria-label="Player Name" value={playerName} onChange={e => onPlayerNameChange(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3" />
+               <input type="text" aria-label="Player Name" value={playerName} onChange={e => onPlayerNameChange(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white" />
             </div>
             <div>
                <label className="block text-sm font-semibold mb-2 text-green-400">Gemini API Key (Required for Host)</label>
-               <input type="password" aria-label="Host API Key" value={hostApiKey} onChange={e => onHostApiKeyChange(e.target.value)} placeholder="AIza..." className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3" />
+               <input type="password" aria-label="Host API Key" value={hostApiKey} onChange={e => onHostApiKeyChange(e.target.value)} placeholder="AIza..." className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white" />
                <p className="text-xs text-gray-500 mt-1">The key is used only to generate questions and is not stored.</p>
             </div>
             <Button fullWidth onClick={onCreateRoom} className="!bg-green-600">Create Room & Lobby</Button>

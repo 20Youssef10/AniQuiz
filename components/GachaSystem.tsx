@@ -103,7 +103,7 @@ const GachaSystem: React.FC<GachaSystemProps> = ({ user, onClose, onCardPulled, 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md animate-fade-in">
       <div className="w-full max-w-md p-6 relative text-center">
-        <button onClick={onClose} aria-label="Close gacha" className="absolute top-0 right-0 text-gray-400 hover:text-white p-2 cursor-pointer">
+        <button onClick={onClose} aria-label="Close gacha" className="absolute top-0 right-0 text-gray-400 hover:text-white p-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
           <X className="w-5 h-5" />
         </button>
         
