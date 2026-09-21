@@ -863,8 +863,8 @@ export default function App() {
          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
             <div className="glass-panel p-8 rounded-2xl max-w-sm w-full space-y-4">
                <h2 className="text-2xl font-bold mb-4">{t('joinParty', homeLang)}</h2>
-               <input type="text" aria-label="Your Name" placeholder={t('yourName', homeLang)} value={playerName} onChange={e => setPlayerName(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white" />
-               <input type="text" aria-label="Room Code" placeholder={t('roomCode', homeLang)} value={roomCodeInput} onChange={e => setRoomCodeInput(e.target.value.toUpperCase())} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 font-mono tracking-widest uppercase text-white" maxLength={6} />
+               <input type="text" aria-label="Your Name" placeholder={t('yourName', homeLang)} value={playerName} onChange={e => setPlayerName(e.target.value)} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white" />
+               <input type="text" aria-label="Room Code" placeholder={t('roomCode', homeLang)} value={roomCodeInput} onChange={e => setRoomCodeInput(e.target.value.toUpperCase())} className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 font-mono tracking-widest uppercase text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white" maxLength={6} />
                {state.error && <p className="text-red-400 text-sm">{state.error}</p>}
                <Button fullWidth onClick={handleJoinRoom}>{t('enterRoom', homeLang)}</Button>
                <Button fullWidth variant="ghost" onClick={() => { setView('home'); setState(p => ({...p, error: undefined})); }}>{t('cancel', homeLang)}</Button>
