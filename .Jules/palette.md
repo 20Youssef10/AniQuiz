@@ -36,3 +36,7 @@
 ## 2023-10-27 - Custom progress bars require ARIA attributes
 **Learning:** Found that custom visual progress bars in `LevelProgress.tsx` and `Timer.tsx` were built using styled `div`s, but they lacked semantic meaning for assistive technologies, effectively hiding this important status information from screen reader users.
 **Action:** Always add `role="progressbar"`, `aria-valuenow`, `aria-valuemin`, and `aria-valuemax` to custom visual progress bars (along with an appropriate `aria-label`) so screen readers can interpret and announce the current progress accurately.
+
+## 2025-02-28 - Quiz progress bar ARIA attributes
+**Learning:** Found that the quiz progress bar in `App.tsx` was built using styled `div`s, but lacked semantic meaning for assistive technologies, hiding quiz progress status from screen reader users. This reinforces a previously discovered pattern in `LevelProgress.tsx` and `Timer.tsx`.
+**Action:** Always add `role="progressbar"`, `aria-valuenow`, `aria-valuemin`, and `aria-valuemax` to custom visual progress bars (along with an appropriate `aria-label`) so screen readers can interpret and announce the current progress accurately.

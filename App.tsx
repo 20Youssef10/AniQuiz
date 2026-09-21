@@ -710,7 +710,14 @@ export default function App() {
         )}
 
         {/* Progress Bar */}
-        <div className="w-full max-w-2xl bg-white/10 h-1 rounded-full mb-8">
+        <div
+          className="w-full max-w-2xl bg-white/10 h-1 rounded-full mb-8"
+          role="progressbar"
+          aria-valuenow={state.currentIndex + 1}
+          aria-valuemin={1}
+          aria-valuemax={state.questions.length}
+          aria-label={isArabic ? "تقدم الاختبار" : "Quiz Progress"}
+        >
            <div 
              className="h-full bg-anime-primary transition-all duration-500" 
              style={{ width: `${((state.currentIndex + 1) / state.questions.length) * 100}%` }}
