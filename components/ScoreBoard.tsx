@@ -102,7 +102,15 @@ const ScoreBoard: React.FC<ScoreBoardProps> = ({ state, onRestart, onSaveStats }
         <p className="text-gray-400 mb-8">{t('quizCompleted', lang)}</p>
 
         <div className="mb-6 relative">
-          <svg className="w-40 h-40 mx-auto" viewBox="0 0 36 36">
+          <svg
+            className="w-40 h-40 mx-auto"
+            viewBox="0 0 36 36"
+            role="progressbar"
+            aria-valuenow={state.score}
+            aria-valuemin={0}
+            aria-valuemax={totalQuestions}
+            aria-label={t('quizCompleted', lang)}
+          >
             <path
               className="text-gray-700"
               d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
