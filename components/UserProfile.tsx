@@ -54,12 +54,12 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ profile, onClose, onL
                 
                 {/* XP Bar */}
                 <div
-                  className="w-full max-w-md bg-black/40 h-4 rounded-full overflow-hidden border border-white/10 relative group"
-                  role="progressbar"
-                  aria-valuenow={Math.round(percentage)}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  aria-label="XP Progress"
+                   className="w-full max-w-md bg-black/40 h-4 rounded-full overflow-hidden border border-white/10 relative group"
+                   role="progressbar"
+                   aria-valuenow={stats.xp}
+                   aria-valuemin={0}
+                   aria-valuemax={stats.nextLevelXp}
+                   aria-label="User XP Progress"
                 >
                    <div className="h-full bg-gradient-to-r from-green-400 to-green-600" style={{ width: `${percentage}%` }}></div>
                    <div className="absolute inset-0 flex items-center justify-center text-[10px] font-mono opacity-0 group-hover:opacity-100 transition-opacity">
