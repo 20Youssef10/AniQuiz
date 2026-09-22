@@ -40,3 +40,7 @@
 ## 2025-02-28 - Quiz progress bar ARIA attributes
 **Learning:** Found that the quiz progress bar in `App.tsx` was built using styled `div`s, but lacked semantic meaning for assistive technologies, hiding quiz progress status from screen reader users. This reinforces a previously discovered pattern in `LevelProgress.tsx` and `Timer.tsx`.
 **Action:** Always add `role="progressbar"`, `aria-valuenow`, `aria-valuemin`, and `aria-valuemax` to custom visual progress bars (along with an appropriate `aria-label`) so screen readers can interpret and announce the current progress accurately.
+
+## 2023-10-27 - Form inputs require explicit id and htmlFor linking
+**Learning:** Found that `<label>` elements were missing the `htmlFor` attribute and corresponding `<input>` fields were missing `id` properties in `components/GameSettings.tsx`. This causes accessibility tools to lose the connection between the label and input.
+**Action:** Always link `<label>` tags with their respective input fields by providing an `id` on the input and mapping `htmlFor` on the label to that `id`.

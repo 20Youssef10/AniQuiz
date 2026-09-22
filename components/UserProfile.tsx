@@ -28,7 +28,7 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ profile, onClose, onL
   return (
     <div className="fixed inset-0 z-[100] bg-anime-dark/95 backdrop-blur-md overflow-y-auto animate-fade-in">
        <div className="max-w-4xl mx-auto p-4 py-12">
-          <button onClick={onClose} aria-label="Close profile" className="fixed top-6 right-6 text-white bg-white/10 hover:bg-white/20 p-2 rounded-full z-50 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+          <button onClick={onClose} aria-label="Close profile" className="fixed top-6 right-6 text-white bg-white/10 hover:bg-white/20 p-2 rounded-full z-50 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900">
             <X className="w-5 h-5" />
           </button>
 
@@ -53,7 +53,14 @@ const UserProfileView: React.FC<UserProfileViewProps> = ({ profile, onClose, onL
                 </div>
                 
                 {/* XP Bar */}
-                <div className="w-full max-w-md bg-black/40 h-4 rounded-full overflow-hidden border border-white/10 relative group">
+                <div
+                  className="w-full max-w-md bg-black/40 h-4 rounded-full overflow-hidden border border-white/10 relative group"
+                  role="progressbar"
+                  aria-valuenow={Math.round(percentage)}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label="XP Progress"
+                >
                    <div className="h-full bg-gradient-to-r from-green-400 to-green-600" style={{ width: `${percentage}%` }}></div>
                    <div className="absolute inset-0 flex items-center justify-center text-[10px] font-mono opacity-0 group-hover:opacity-100 transition-opacity">
                       {stats.xp} / {stats.nextLevelXp} XP
