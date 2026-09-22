@@ -756,7 +756,7 @@ export default function App() {
          <div className="flex gap-3 items-center">
             <button
                onClick={toggleLanguage}
-               className="px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-xs font-semibold flex items-center gap-1.5 transition-colors border border-white/10 cursor-pointer text-gray-200"
+               className="px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-xs font-semibold flex items-center gap-1.5 transition-colors border border-white/10 cursor-pointer text-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
                aria-label="Toggle language"
                title={isArabic ? 'Switch to English' : 'التبديل إلى العربية'}
             >
